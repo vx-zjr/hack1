@@ -1,0 +1,143 @@
+# HACK//OS Electron UI Demo
+
+Electron desktop demo for red-team exercise UI/UX rehearsal. All query, scan,
+attack, hash, map, chart, and log content is generated locally from fake data.
+The only real external lookup is the welcome-page public IP geolocation display.
+The app does not run system commands, scanning, exploitation, packet capture, or
+real threat-intelligence lookups.
+
+## Key Dependencies
+
+- Electron `^42.1.0`
+- Vite `^8.0.13`
+- React `^19.2.6`
+- TypeScript `^6.0.3`
+- Three.js `^0.184.0`
+- `@react-three/fiber` `^9.6.1`
+- `@react-three/drei` `^10.7.7`
+- Tailwind CSS `^4.3.0`
+- Framer Motion `^12.38.0`
+- Zustand `^5.0.13`
+- lucide-react `^1.16.0`
+- Recharts `^3.8.1`
+- `@playwright/test` `^1.60.0` and `pngjs` `^7.0.0` for visual smoke checks
+
+## Project Structure
+
+```text
+Y:\hack1
+|-- electron/
+|   |-- main.ts
+|   `-- preload.ts
+|-- public/
+|   `-- assets/
+|-- src/
+|   |-- App.tsx
+|   |-- main.tsx
+|   |-- lib/
+|   |-- pages/
+|   |-- store/
+|   |-- styles/
+|   `-- three/
+|-- welcomeweb/
+|-- package.json
+|-- vite.config.ts
+|-- tsconfig.json
+`-- tsconfig.node.json
+```
+
+## Implemented Stages
+
+- Loading page: random 10-15 second boot sequence contained inside a centered
+  loading panel. The panel uses `public/assets/loading-bg.png` as its background
+  image, instead of making the loading treatment fill the whole screen. Startup
+  also performs time validation using public network time when available, then
+  local time as fallback. After `2026-05-18 00:00:00` China time, the app shows
+  `时间验证过期，数据已经清除`, clears local browser storage, and does not enter the
+  welcome page.
+- Welcome page: React/TypeScript rebuild of the original `welcomeweb` hacker layout,
+  including glitch typography, terminal input styling, scanlines, status strip, and
+  the right-side 3D entity. Removed the requested `tribe`, model name/index, `form`,
+  and `tribes` UI labels.
+- Welcome footer: best-effort public IP geolocation using `ipapi.co`, `ipwho.is`,
+  `api.ip.sb`, and `ipinfo.io`, displayed in Chinese and English. By default this
+  uses the machine's direct public egress IP; set `HACKOS_PROXY_SERVER=http://127.0.0.1:7890`
+  only if the app itself should use the local Clash proxy.
+- Login: required-field validation plus the specified demo credentials:
+  username `}Ne2@rs=tC`, password `i32+.NfiqrPQ?_`. Every submission enters the
+  cloud verification page for a random 5-10 seconds before success or failure is
+  resolved; empty fields return to the welcome page with inline required-field
+  messages after that verification sequence.
+- 3D visuals: Three.js/R3F shader-morphed point cloud with 42,000 particles and
+  35 forms based on the original `giveyou/morph.js` form set plus math, hacker,
+  technology, and intelligence-themed forms. The scattered instanced cube background
+  was removed. The model is scaled down, the draw area is expanded, and pointer
+  interaction now warps/highlights nearby particles. The welcome model loop is
+  driven by absolute time and explicit `fromPosition` / `toPosition` buffers, so
+  it advances sequentially through all forms instead of falling back after the
+  first two.
+- Background: faster, stronger fullscreen WebGL shader smoke, grid, scanline, and
+  terminal chrome.
+- Auth animation: 5-10 second cloud verification particle aggregation with denser
+  icon/status effects and four authentication steps.
+- Security injection: fixed 30 second `注入安全模块` stage with local trace logs,
+  WebGL particles, icon matrix, and progress telemetry before the terminal cutscene.
+  The trace panel is fixed-height and long log entries are truncated to avoid
+  layout stretching during refresh.
+- TTY cutscene: 24-30 second CRT/TUI terminal replay with 1,500+ generated fake
+  command/output lines, rapid pane refresh, typed input stream, and final
+  `[+] ROOT ACCESS GRANTED`.
+- Global close control: every post-loading phase has a top-right close button. It
+  opens a confirmation dialog and unlocks `确定关闭` after a 5 second countdown,
+  then closes the Electron app through preload IPC.
+- Dashboard: dense command-center UI with sidebar modules, fake global attack
+  globe, live logs, line/radar/area charts, threat level, and strict permission
+  behavior. Added dedicated simulated pages for `抖音`, `微信`, `小红书`, `酒店`,
+  `大数据`, `户籍`, and `摄像头`; each asks for `手机号` and `APIKEY`, then runs a
+  two-minute local loading animation. The specified API key opens a simulated
+  download page with dynamic 100-300 mbps speed and about two hours remaining.
+  Empty APIKEY submissions show `请输入APIKEY`. All other legacy modules show
+  `无权限`.
+
+## Commands
+
+```powershell
+npm run dev
+npm run build
+npm run visual:smoke
+npm run dist
+```
+
+`npm run dev` starts Vite HMR and opens the frameless fullscreen Electron window.
+DevTools open automatically in development and can also be toggled with
+`Ctrl+Shift+I`.
+
+The dev command launches Electron through `scripts/start-electron.mjs`, which removes
+`ELECTRON_RUN_AS_NODE` from the child environment before starting Electron. This keeps
+the app launch stable even when that variable is set globally in the shell.
+
+## Known Limits
+
+- This is a UI demo only. No real WHOIS, scanning, port probing, CVE lookup, hash
+  cracking, packet capture, or shell execution is present. The public IP geolocation
+  footer is the only real external network lookup.
+- The first complete path to the dashboard intentionally takes about 69-85 seconds
+  because the requested loading, auth, 30 second injection, and TTY timings are
+  preserved.
+- The app expires after `2026-05-18 00:00:00` China time. If public time APIs are
+  unavailable, expiration uses the local machine clock.
+- The two-minute special-module loading and long download page are simulated UI
+  states only. They do not create files, call external APIs, query accounts, or
+  download data.
+- Production build currently emits a large chunk warning due to Three.js, Recharts,
+  and React ecosystem code. This is acceptable for the desktop demo.
+- Electron defaults to frameless fullscreen mode.
+
+## Verification
+
+- `npm run build` completed successfully after the latest revisions.
+- Electron binary verified as `v42.1.0` after clearing `ELECTRON_RUN_AS_NODE`.
+- `npm run visual:smoke` completed successfully after the latest revisions and wrote `visual-welcome.png`,
+  `visual-dashboard.png`, and `visual-report.json`.
+- Welcome footer geolocation was verified in Chromium and rendered `GEO // ...`
+  with Chinese and English location text.

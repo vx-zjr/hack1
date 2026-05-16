@@ -1,0 +1,12 @@
+node_modules/
+dist/
+dist-electron/
+release/
+*.log
+*.pid
+visual-*.png
+visual-report.json
+.vite/
+.env
+.env.*
+!.env.example

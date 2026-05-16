@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <rect x="2" y="2" width="60" height="60" fill="none" stroke="#3AFF7C" stroke-width="2"></rect>
+  <rect x="8" y="8" width="48" height="48" fill="none" stroke="#3AFF7C" stroke-width="1" opacity="0.35"></rect>
+  <g fill="#3AFF7C" font-family="&#39;JetBrains Mono&#39;, monospace" font-weight="700" font-size="22">
+    <text x="14" y="40">[H]</text>
+  </g>
+  <circle cx="54" cy="10" r="2.5" fill="#3AFF7C">
+    
+  </circle>
+</svg>

@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="zh-CN" data-screen-label="HACK//OS Hero v2">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1440">
+<title>HACK//OS — 进入网络</title>
+<link rel="icon" href="assets/logo-mark.svg">
+<link rel="stylesheet" href="assets/colors_and_type.css">
+<link rel="stylesheet" href="hero.css">
+</head>
+<body>
+
+<div class="scanlines"></div>
+
+<div class="too-small">
+  <span class="glow">HACK//OS</span>
+  <span>// desktop-only experience · 仅限桌面端</span>
+  <span style="color: var(--fg-muted)">// minimum viewport 760px · please use a wider screen</span>
+</div>
+
+<main class="stage">
+
+  <!-- ============== LEFT — content ============== -->
+  <section class="left">
+
+    <span class="eyebrow fade-in d1">PROTOCOL v4.2 · 26.04 · CLEARED // 终端就绪</span>
+
+    <h1 class="headline fade-in d2" id="headline">
+      <span class="row" id="row-1"><span class="glitch" data-text="ENTER//"><span id="line1">ENTER//</span></span></span>
+      <span class="row" id="row-2"><span class="glitch accent" data-text="THE GRID."><span class="accent" id="line2">THE GRID.</span></span><span class="cursor-blink"></span></span>
+    </h1>
+
+    <p class="subline fade-in d3">
+      <span class="ok">// HACK//OS</span> · 桌面级红队作战工作站。<span class="y">侦察</span> · <span class="b">突破</span> · <span class="r">控制</span> · <span class="ok">撤离</span> — 所有操作在一个键盘驱动的终端里完成。<span class="muted">authorized engagements only.</span>
+    </p>
+
+    <!-- Terminal-style typing block (longer hacker commands) -->
+    <div class="type-block fade-in d3" id="type-block">
+      <span class="cmd-line" id="cmd-1"></span>
+      <span class="cmd-line" id="cmd-2"></span>
+      <span class="cmd-line" id="cmd-3"></span>
+    </div>
+
+    <!-- AUTH FORM -->
+    <form class="auth fade-in d4" id="auth-form" autocomplete="off" novalidate>
+      <div class="auth-row">
+        <label class="auth-label">
+          <span>// USERNAME</span>
+          <span class="cn">用户名</span>
+          <span style="margin-left:auto;color:var(--fg-faint)">[required]</span>
+        </label>
+        <div class="auth-field">
+          <span class="prompt">$&gt;</span>
+          <input type="text" name="username" id="username" placeholder="root@hackos" autofocus spellcheck="false" autocorrect="off" autocapitalize="off">
+          <span class="field-end"><span class="live">●</span> live</span>
+        </div>
+      </div>
+
+      <div class="auth-row">
+        <label class="auth-label">
+          <span>// PASSWORD</span>
+          <span class="cn">密码</span>
+          <span style="margin-left:auto;color:var(--fg-faint)" id="caps-hint">[caps · off]</span>
+        </label>
+        <div class="auth-field">
+          <span class="prompt">$&gt;</span>
+          <input type="password" name="password" id="password" placeholder="●●●●●●●●●●●●" spellcheck="false">
+          <span class="field-end" id="key-pulse">▮▮▮</span>
+        </div>
+      </div>
+
+      <div class="auth-cta-row">
+        <button type="submit" class="btn-enter">
+          <span class="cn">进入</span>
+          <span class="en">ENTER</span>
+          <span class="arrow">→</span>
+        </button>
+        <div class="auth-meta">
+          <span>// 2FA · <span class="v">U2F READY</span></span>
+          <span>// SESS · <span class="v" id="auth-sess">sess_08f</span></span>
+        </div>
+      </div>
+    </form>
+
+  </section>
+
+  <!-- ============== RIGHT — morphing entity ============== -->
+  <section class="right">
+    <canvas id="stage-canvas"></canvas>
+    <div class="bracket tl"></div>
+    <div class="bracket tr"></div>
+    <div class="bracket bl"></div>
+    <div class="bracket br"></div>
+
+    <div class="entity-overlay">
+      <div class="corner tl">
+        ENTITY · ROUTE //<br>
+        <b>ID</b> <span class="v">0xE-08F</span><br>
+        <b>STATE</b> <span class="v">LIVE</span><br>
+        <b>SEED</b> <span class="c">0xDE·AD·BE·EF</span>
+      </div>
+      <div class="corner tr">
+        TARGET LOCK //<br>
+        <b>FORM</b> <span class="v" id="tele-form">SPHERE//00</span><br>
+        <b>NODES</b> <span class="v" id="tele-nodes">7200</span><br>
+        <b>TRIBES</b> <span class="y">●</span><span class="c">●</span><span class="b">●</span><span class="r">●</span> 4
+      </div>
+      <div class="corner bl">
+        TELEMETRY //<br>
+        <b>RADIUS</b> <span class="v" id="tele-radius">1.00</span><br>
+        <b>FACES</b> <span class="c" id="tele-faces">∞</span><br>
+        <b>DRIFT</b> <span class="v">99.7%</span>
+      </div>
+      <div class="corner br">
+        SIGNATURE //<br>
+        <b>HZ</b> <span class="v" id="tele-fps">60.0</span><br>
+        <b>SYNC</b> <span class="v">OK</span><br>
+        <b>NOISE</b> <span class="c">-72 dB</span>
+      </div>
+    </div>
+
+    <div class="tele" style="top: 30%; left: 6%;"><span class="l">phase</span><span class="v">412ms</span></div>
+    <div class="tele" style="top: 64%; right: 8%;"><span class="l">handshake</span><span class="v">◉ armed</span></div>
+    <div class="tele" style="top: 48%; right: 5%;"><span class="l">tribe</span><span class="y">●</span><span class="b">●</span><span class="r">●</span><span class="v">●</span></div>
+
+    <div class="form-indicator">
+      <span id="form-pips"></span>
+      <span class="name" id="form-name">SPHERE//00</span>
+    </div>
+  </section>
+
+  <!-- ============== Bottom strip ============== -->
+  <footer class="bottom-strip fade-in d5">
+    <span>
+      <span class="lbl">TIME //</span>
+      <span class="ok" id="local-date">2026-05-16</span>
+      <span class="sep">·</span>
+      <span class="ok" id="local-time">00:00:00</span>
+      <span class="sep">·</span>
+      <span id="tz">UTC+08</span>
+    </span>
+    <span>
+      <span class="lbl">NET //</span>
+      <span>WAN <span class="cy" id="wan-ip">61.135.169.121</span></span>
+      <span class="sep">·</span>
+      <span>LAN <span class="cy" id="lan-ip">192.168.1.108</span></span>
+      <span class="sep">·</span>
+      <span>ASN <span class="y">AS4808</span></span>
+    </span>
+    <span>
+      <span class="lbl">GEO //</span>
+      <span class="cn" id="geo-cn">中国 · 北京市 · 朝阳区</span>
+      <span class="sep">/</span>
+      <span id="geo-en">China · Beijing · Chaoyang</span>
+      <span class="sep">·</span>
+      <span class="y">39.92°N</span>
+      <span>·</span>
+      <span class="y">116.40°E</span>
+    </span>
+    <span>
+      <span class="lbl">SYS //</span>
+      <span class="dot"></span>
+      <span class="ok">ONLINE</span>
+      <span class="sep">·</span>
+      <span class="cy">TOR 3-HOP</span>
+      <span class="sep">·</span>
+      <span class="r">03 CRIT</span>
+    </span>
+  </footer>
+
+</main>
+
+<script src="text-fx.js"></script>
+<script src="morph.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,166 @@
+/* ==========================================================================
+   HACK//OS — Colors & Type foundations
+   Dark-terminal aesthetic. Phosphor-green primary, cyan secondary, monospace-first.
+   ========================================================================== */
+
+/* Google Fonts — substitution note:
+   No custom fonts were provided, so we're loading nearest matches from Google Fonts.
+   - JetBrains Mono       → primary monospace (terminal, UI, code)
+   - Space Grotesk        → display / brand wordmark
+   - Inter                → fallback sans for dense UI copy
+   Replace with licensed .ttf/.woff2 in fonts/ when available. */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  /* -------- Colors: core surfaces -------- */
+  --bg-void:      #05080A;   /* deepest — page background */
+  --bg-base:     #0A0F12;    /* default surface */
+  --bg-elev-1:   #10171B;    /* raised panels */
+  --bg-elev-2:   #182026;    /* cards, modals */
+  --bg-elev-3:   #222C33;    /* hover / input fields */
+
+  /* -------- Colors: borders & dividers -------- */
+  --border-subtle:   #1A2328;
+  --border-default:  #253038;
+  --border-strong:   #37454E;
+  --border-glow:     rgba(58, 255, 124, 0.35);
+
+  /* -------- Colors: foreground / text -------- */
+  --fg-primary:    #D7E3E9;   /* main text */
+  --fg-secondary:  #8A9BA5;   /* secondary text */
+  --fg-muted:      #566570;   /* disabled / hints */
+  --fg-faint:      #35424A;   /* scaffolding / dividers-as-text */
+  --fg-inverse:    #05080A;   /* on bright accents */
+
+  /* -------- Colors: accent (phosphor green) -------- */
+  --accent:          #3AFF7C;   /* primary — phosphor green */
+  --accent-bright:   #7BFFA8;   /* hover */
+  --accent-dim:      #1FB257;   /* pressed */
+  --accent-faint:    rgba(58, 255, 124, 0.12);
+  --accent-glow:     rgba(58, 255, 124, 0.55);
+
+  /* -------- Colors: secondary accent (cyan) -------- */
+  --cyan:         #00E5FF;
+  --cyan-bright:  #66F1FF;
+  --cyan-dim:     #009BB0;
+  --cyan-faint:   rgba(0, 229, 255, 0.12);
+
+  /* -------- Colors: semantic -------- */
+  --danger:         #FF3B5C;
+  --danger-bright:  #FF7089;
+  --danger-dim:     #B21E3A;
+  --danger-faint:   rgba(255, 59, 92, 0.12);
+
+  --warn:           #FFB020;
+  --warn-bright:    #FFD16B;
+  --warn-dim:       #B37800;
+  --warn-faint:     rgba(255, 176, 32, 0.12);
+
+  --info:           #8B9CFF;   /* lavender — used sparingly */
+  --info-faint:     rgba(139, 156, 255, 0.12);
+
+  /* -------- Typography: families -------- */
+  --font-mono:    'JetBrains Mono', 'SF Mono', 'Menlo', ui-monospace, monospace;
+  --font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  --font-sans:    'Inter', system-ui, -apple-system, sans-serif;
+
+  /* -------- Typography: scale -------- */
+  --fs-micro:  10px;   /* uppercase labels, chips */
+  --fs-xs:     12px;   /* metadata, keybinds */
+  --fs-sm:     13px;   /* body small */
+  --fs-base:   14px;   /* default body */
+  --fs-md:     16px;   /* prominent body */
+  --fs-lg:     20px;   /* h4 */
+  --fs-xl:     26px;   /* h3 */
+  --fs-2xl:    34px;   /* h2 */
+  --fs-3xl:    48px;   /* h1 */
+  --fs-display: 72px;  /* hero */
+
+  /* -------- Typography: weights & leading -------- */
+  --fw-regular:  400;
+  --fw-medium:   500;
+  --fw-semibold: 600;
+  --fw-bold:     700;
+
+  --lh-tight:  1.15;
+  --lh-snug:   1.3;
+  --lh-body:   1.5;
+  --lh-loose:  1.7;
+
+  --tracking-display: -0.02em;
+  --tracking-body:     0em;
+  --tracking-label:    0.12em;   /* uppercase eyebrows */
+  --tracking-mono:     0.01em;
+
+  /* -------- Spacing -------- */
+  --sp-1:  4px;
+  --sp-2:  8px;
+  --sp-3:  12px;
+  --sp-4:  16px;
+  --sp-5:  20px;
+  --sp-6:  24px;
+  --sp-8:  32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+  --sp-16: 64px;
+  --sp-20: 80px;
+
+  /* -------- Radii -------- */
+  --r-none:  0px;          /* default for "terminal" hacker chrome */
+  --r-xs:    2px;
+  --r-sm:    4px;
+  --r-md:    6px;
+  --r-lg:    10px;
+  --r-xl:    16px;
+  --r-pill:  999px;
+
+  /* -------- Shadows & glows -------- */
+  --shadow-panel:    0 1px 0 0 rgba(255,255,255,0.03) inset, 0 12px 30px -12px rgba(0,0,0,0.8);
+  --shadow-pop:      0 20px 40px -16px rgba(0,0,0,0.9), 0 0 0 1px var(--border-default);
+  --shadow-scanline: inset 0 0 0 1px rgba(58,255,124,0.06);
+
+  --glow-accent:     0 0 0 1px var(--accent), 0 0 18px 0 var(--accent-glow);
+  --glow-accent-sm:  0 0 8px 0 rgba(58,255,124,0.35);
+  --glow-cyan:       0 0 0 1px var(--cyan), 0 0 16px 0 rgba(0,229,255,0.45);
+  --glow-danger:     0 0 0 1px var(--danger), 0 0 16px 0 rgba(255,59,92,0.45);
+  --text-glow:       0 0 6px rgba(58,255,124,0.55);
+  --text-glow-cyan:  0 0 6px rgba(0,229,255,0.55);
+
+  /* -------- Motion -------- */
+  --ease-out:     cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out:  cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-snap:    cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast:     120ms;
+  --dur-base:     180ms;
+  --dur-slow:     320ms;
+}
+
+/* ==========================================================================
+   Semantic type classes — use these in markup so roles stay consistent.
+   ========================================================================== */
+
+.display   { font-family: var(--font-display); font-size: var(--fs-display); font-weight: 700; line-height: var(--lh-tight);   letter-spacing: var(--tracking-display); }
+.h1        { font-family: var(--font-display); font-size: var(--fs-3xl);      font-weight: 700; line-height: var(--lh-tight);   letter-spacing: var(--tracking-display); }
+.h2        { font-family: var(--font-display); font-size: var(--fs-2xl);      font-weight: 600; line-height: var(--lh-snug);    letter-spacing: -0.01em; }
+.h3        { font-family: var(--font-display); font-size: var(--fs-xl);       font-weight: 600; line-height: var(--lh-snug);    letter-spacing: -0.005em; }
+.h4        { font-family: var(--font-display); font-size: var(--fs-lg);       font-weight: 600; line-height: var(--lh-snug); }
+
+.body      { font-family: var(--font-sans);    font-size: var(--fs-base);    font-weight: 400; line-height: var(--lh-body); }
+.body-sm   { font-family: var(--font-sans);    font-size: var(--fs-sm);      font-weight: 400; line-height: var(--lh-body); }
+.body-lg   { font-family: var(--font-sans);    font-size: var(--fs-md);      font-weight: 400; line-height: var(--lh-body); }
+
+.mono      { font-family: var(--font-mono);    font-size: var(--fs-sm);      font-weight: 400; letter-spacing: var(--tracking-mono); }
+.mono-sm   { font-family: var(--font-mono);    font-size: var(--fs-xs);      font-weight: 400; letter-spacing: var(--tracking-mono); }
+.code      { font-family: var(--font-mono);    font-size: var(--fs-sm);      font-weight: 400; color: var(--accent); }
+
+.label     { font-family: var(--font-mono);    font-size: var(--fs-micro);   font-weight: 500; text-transform: uppercase; letter-spacing: var(--tracking-label); color: var(--fg-secondary); }
+.kbd       { font-family: var(--font-mono);    font-size: var(--fs-xs);      font-weight: 500; padding: 2px 6px; border: 1px solid var(--border-default); border-radius: var(--r-xs); background: var(--bg-elev-1); color: var(--fg-secondary); }
+
+.caption   { font-family: var(--font-sans);    font-size: var(--fs-xs);      font-weight: 400; color: var(--fg-secondary); line-height: var(--lh-body); }
+.hint      { font-family: var(--font-mono);    font-size: var(--fs-xs);      font-weight: 400; color: var(--fg-muted); }
+
+/* Terminal "TTY" block — used for logs, packet dumps, command output */
+.tty       { font-family: var(--font-mono);    font-size: var(--fs-sm);      line-height: 1.45; color: var(--accent); text-shadow: var(--text-glow); white-space: pre; }
+
+/* Brand wordmark */
+.wordmark  { font-family: var(--font-mono);    font-size: var(--fs-base);    font-weight: 700; letter-spacing: 0.06em; color: var(--accent); text-shadow: var(--text-glow); }

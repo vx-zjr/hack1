@@ -9,5 +9,6 @@ interface Window {
       node?: string;
     };
     closeApp?: () => void;
+    selectFolder?: () => Promise<string | null>;
   };
 }

@@ -1,6 +1,6 @@
-# HACK//OS Electron UI Demo
+# SEK内部版 Electron UI Demo
 
-Electron desktop demo for red-team exercise UI/UX rehearsal. All query, scan,
+Electron desktop demo for internal UI/UX rehearsal. All query, scan,
 attack, hash, map, chart, and log content is generated locally from fake data.
 The only real external lookup is the welcome-page public IP geolocation display.
 The app does not run system commands, scanning, exploitation, packet capture, or
@@ -68,36 +68,39 @@ Y:\hack1
   cloud verification page for a random 5-10 seconds before success or failure is
   resolved; empty fields return to the welcome page with inline required-field
   messages after that verification sequence.
-- 3D visuals: Three.js/R3F shader-morphed point cloud with 42,000 particles and
-  35 forms based on the original `giveyou/morph.js` form set plus math, hacker,
-  technology, and intelligence-themed forms. The scattered instanced cube background
-  was removed. The model is scaled down, the draw area is expanded, and pointer
-  interaction now warps/highlights nearby particles. The welcome model loop is
-  driven by absolute time and explicit `fromPosition` / `toPosition` buffers, so
-  it advances sequentially through all forms instead of falling back after the
-  first two.
+- 3D visuals: the welcome model panel was fully rewritten as an independent
+  crossfade renderer. It no longer reuses the old morph state machine or model
+  generator path. Twelve standalone high-density point-cloud forms rotate in
+  sequence, with only the current and previous forms mounted during transitions.
 - Background: faster, stronger fullscreen WebGL shader smoke, grid, scanline, and
   terminal chrome.
 - Auth animation: 5-10 second cloud verification particle aggregation with denser
   icon/status effects and four authentication steps.
 - Security injection: fixed 30 second `注入安全模块` stage with local trace logs,
   WebGL particles, icon matrix, and progress telemetry before the terminal cutscene.
-  The trace panel is fixed-height and long log entries are truncated to avoid
-  layout stretching during refresh.
+  The trace panel is fixed-height; random English trace lines push upward from
+  the bottom instead of refreshing the whole list.
 - TTY cutscene: 24-30 second CRT/TUI terminal replay with 1,500+ generated fake
   command/output lines, rapid pane refresh, typed input stream, and final
   `[+] ROOT ACCESS GRANTED`.
 - Global close control: every post-loading phase has a top-right close button. It
   opens a confirmation dialog and unlocks `确定关闭` after a 5 second countdown,
   then closes the Electron app through preload IPC.
-- Dashboard: dense command-center UI with sidebar modules, fake global attack
-  globe, live logs, line/radar/area charts, threat level, and strict permission
-  behavior. Added dedicated simulated pages for `抖音`, `微信`, `小红书`, `酒店`,
-  `大数据`, `户籍`, and `摄像头`; each asks for `手机号` and `APIKEY`, then runs a
-  two-minute local loading animation. The specified API key opens a simulated
-  download page with dynamic 100-300 mbps speed and about two hours remaining.
-  Empty APIKEY submissions show `请输入APIKEY`. All other legacy modules show
-  `无权限`.
+- Dashboard: dense command-center UI with sidebar modules, professional TTY-style
+  operations panel, live logs, packet waveform, auth event queue, filesystem I/O
+  chart, threat level, and strict permission behavior. Dedicated simulated pages
+  are available for `抖音`, `微信`, `小红书`, `酒店开房同住`, `大数据关联`, `户籍`, and
+  `摄像头`; each asks for `手机号` and `APIKEY`, then runs a 130 second local
+  loading animation with 10+ visible status/effect groups. The specified API key
+  opens a local folder selection step recommending 100GB free space, then a
+  simulated download page with dynamic 100-300 mbps speed and about two hours
+  remaining. Empty APIKEY submissions show `请输入APIKEY`. All other legacy modules
+  show only `无权限`.
+- Export control: the download page includes `数据格式导出`; clicking it reports
+  `数据尚未下载完成，无法导出`.
+- Branding: in-app branding and packaged application name are `SEK//OS` /
+  `SEK内部版`. Windows builds use `build/icon.ico` instead of the default Electron
+  icon.
 
 ## Commands
 

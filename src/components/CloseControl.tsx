@@ -34,9 +34,6 @@ export function CloseControl() {
           <section className="panel terminal-border w-[460px] max-w-[calc(100vw-48px)] p-6">
             <div className="mono text-[11px] uppercase tracking-[0.24em] text-[var(--danger)]">CLOSE SESSION // CONFIRM</div>
             <div className="mt-4 font-mono text-xl font-bold text-[var(--fg-primary)]">确认关闭应用？</div>
-            <div className="mt-3 mono text-sm leading-6 text-[var(--fg-secondary)]">
-              关闭会终止当前演示流程和本地 Electron 会话。为避免误触，确定关闭按钮将在 5 秒倒计时结束后解锁。
-            </div>
             <div className="mt-6 h-2 border border-[var(--border-default)] bg-black/45">
               <div className="h-full bg-[var(--danger)] transition-[width] duration-1000" style={{ width: `${((5 - countdown) / 5) * 100}%` }} />
             </div>

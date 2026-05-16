@@ -7,15 +7,40 @@ import * as THREE from 'three';
 const DURATION = 30_000;
 
 const modules = [
-  '注入安全模块 / Inject safety module',
-  '隔离渲染沙盒 / Isolate render sandbox',
-  '绑定假数据总线 / Bind synthetic data bus',
-  '加载视觉遥测 / Load visual telemetry',
-  '签发演示令牌 / Issue demo token',
-  '启动权限壳层 / Start permission shell',
+  'Inject safety module',
+  'Isolate render sandbox',
+  'Bind synthetic data bus',
+  'Load visual telemetry',
+  'Issue demo token',
+  'Start permission shell',
+];
+
+const traceMessages = [
+  'routing kernel-safe visual bus',
+  'seeding encrypted frame cache',
+  'mapping volatile memory window',
+  'hydrating telemetry ring buffer',
+  'validating operator capability flag',
+  'rotating one-way display token',
+  'probing synthetic syscall table',
+  'mounting isolated render volume',
+  'binding local audit semaphore',
+  'normalizing packet entropy stream',
+  'compacting transient route graph',
+  'arming viewport watchdog',
+  'indexing volatile event journal',
+  'warming shader execution lane',
+  'checking sandbox integrity marker',
+  'pinning temporary access vector',
 ];
 
 const icons = [ShieldCheck, LockKeyhole, Cpu, Server, Database, RadioTower, Fingerprint, KeyRound, HardDrive, Activity];
+
+type TraceLog = {
+  id: string;
+  text: string;
+  tone: 'normal' | 'cyan' | 'warn';
+};
 
 const vertexShader = `
   attribute float phase;
@@ -122,27 +147,35 @@ function percent(value: number) {
 
 export default function SecurityInjectionPage({ onComplete }: { onComplete: () => void }) {
   const [progress, setProgress] = useState(0);
-  const [logs, setLogs] = useState<string[]>([]);
+  const [logs, setLogs] = useState<TraceLog[]>([]);
 
   useEffect(() => {
     const started = performance.now();
-    const raf = window.setInterval(() => {
+    const progressTimer = window.setInterval(() => {
       const next = Math.min(1, (performance.now() - started) / DURATION);
       setProgress(next);
       if (next >= 1) {
-        window.clearInterval(raf);
+        window.clearInterval(progressTimer);
         window.setTimeout(onComplete, 720);
       }
     }, 80);
 
     const logTimer = window.setInterval(() => {
-      const picked = modules[Math.floor(Math.random() * modules.length)];
+      const message = traceMessages[Math.floor(Math.random() * traceMessages.length)];
       const code = Math.random().toString(16).slice(2, 10).toUpperCase();
-      setLogs((current) => [`[${new Date().toLocaleTimeString('en-US', { hour12: false })}] [OK] ${picked} :: ${code}`, ...current].slice(0, 18));
+      const tone = Math.random() > 0.82 ? 'warn' : Math.random() > 0.55 ? 'cyan' : 'normal';
+      setLogs((current) => [
+        ...current.slice(-18),
+        {
+          id: `${Date.now()}-${code}`,
+          text: `[${new Date().toLocaleTimeString('en-US', { hour12: false })}] ${message} :: ${code}`,
+          tone,
+        },
+      ]);
     }, 420);
 
     return () => {
-      window.clearInterval(raf);
+      window.clearInterval(progressTimer);
       window.clearInterval(logTimer);
     };
   }, [onComplete]);
@@ -197,7 +230,7 @@ export default function SecurityInjectionPage({ onComplete }: { onComplete: () =
           <aside className="panel terminal-border flex min-h-0 flex-col overflow-hidden p-5">
             <div className="mb-4 flex items-center justify-between mono text-[11px] uppercase tracking-[0.2em] text-[var(--fg-muted)]">
               <span>INJECTION TRACE</span>
-              <span className="glow">LIVE</span>
+              <span className="glow">STREAM</span>
             </div>
             <div className="grid grid-cols-5 gap-2">
               {icons.map((Icon, index) => (
@@ -211,15 +244,16 @@ export default function SecurityInjectionPage({ onComplete }: { onComplete: () =
                 </motion.div>
               ))}
             </div>
-            <div className="thin-scrollbar mt-5 min-h-0 flex-1 overflow-hidden pr-1 mono text-[11px] leading-5">
-              {logs.map((log, index) => (
+            <div className="thin-scrollbar mt-5 flex min-h-0 flex-1 flex-col justify-end overflow-hidden pr-1 mono text-[11px] leading-5">
+              {logs.map((log) => (
                 <motion.div
-                  key={`${log}-${index}`}
-                  className={`truncate ${index % 5 === 0 ? 'cyan' : index % 7 === 0 ? 'warn' : 'text-[var(--fg-secondary)]'}`}
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
+                  key={log.id}
+                  className={`truncate ${log.tone === 'cyan' ? 'cyan' : log.tone === 'warn' ? 'warn' : 'text-[var(--fg-secondary)]'}`}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.22 }}
                 >
-                  {log}
+                  {log.text}
                 </motion.div>
               ))}
             </div>

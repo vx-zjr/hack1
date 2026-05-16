@@ -1,7 +1,7 @@
 {
-  "name": "hackos-electron-demo",
+  "name": "sek-internal-edition",
   "version": "1.0.0",
-  "description": "Pure frontend HACK//OS red-team UI demo built with Electron, Vite, React, Three.js, and Tailwind CSS.",
+  "description": "Pure frontend SEK internal UI demo built with Electron, Vite, React, Three.js, and Tailwind CSS.",
   "type": "module",
   "main": "dist-electron/main.js",
   "scripts": {
@@ -13,8 +13,8 @@
     "visual:smoke": "node scripts/visual-smoke.mjs"
   },
   "build": {
-    "appId": "local.hackos.demo",
-    "productName": "HACK OS Demo",
+    "appId": "local.sek.internal",
+    "productName": "SEK内部版",
     "directories": {
       "output": "release"
     },
@@ -24,6 +24,8 @@
       "package.json"
     ],
     "win": {
+      "icon": "build/icon.ico",
+      "artifactName": "SEK内部版 Setup ${version}.${ext}",
       "target": "nsis"
     }
   },

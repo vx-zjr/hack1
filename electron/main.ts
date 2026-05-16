@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, globalShortcut, ipcMain } from 'electron';
+import { app, BrowserWindow, Menu, globalShortcut, ipcMain, dialog } from 'electron';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
@@ -20,8 +20,8 @@ function createWindow() {
     fullscreen: true,
     autoHideMenuBar: true,
     backgroundColor: '#05080A',
-    title: 'HACK//OS Demo',
-    icon: path.join(__dirname, '../public/assets/logo-mark.svg'),
+    title: 'SEK内部版',
+    icon: path.join(__dirname, '../build/icon.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -66,6 +66,17 @@ if (process.env.HACKOS_PROXY_SERVER) {
 app.whenReady().then(() => {
   ipcMain.on('app:close-confirmed', () => {
     app.quit();
+  });
+
+  ipcMain.handle('app:select-folder', async () => {
+    if (!mainWindow) return null;
+    const result = await dialog.showOpenDialog(mainWindow, {
+      title: '选择本地预下载目录',
+      buttonLabel: '选择文件夹',
+      properties: ['openDirectory', 'createDirectory'],
+      message: '建议选择剩余空间不少于 100GB 的本地文件夹。',
+    });
+    return result.canceled ? null : (result.filePaths[0] ?? null);
   });
 
   globalShortcut.register('CommandOrControl+Shift+I', () => {

@@ -8,4 +8,5 @@ contextBridge.exposeInMainWorld('hackos', {
     node: process.versions.node,
   },
   closeApp: () => ipcRenderer.send('app:close-confirmed'),
+  selectFolder: () => ipcRenderer.invoke('app:select-folder') as Promise<string | null>,
 });

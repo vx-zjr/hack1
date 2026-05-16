@@ -1,14 +1,9 @@
-import { Canvas, useFrame } from '@react-three/fiber';
 import {
   Area,
   AreaChart,
   CartesianGrid,
   Line,
   LineChart,
-  PolarAngleAxis,
-  PolarGrid,
-  Radar,
-  RadarChart,
   Tooltip,
   XAxis,
   YAxis,
@@ -20,10 +15,13 @@ import {
   BookOpen,
   Bug,
   Camera,
+  CheckCircle2,
   Cpu,
   Database,
   Download,
+  FileDown,
   Fingerprint,
+  FolderOpen,
   Globe2,
   Hotel,
   IdCard,
@@ -37,7 +35,6 @@ import {
   Play,
   RadioTower,
   Search,
-  Shield,
   ShieldAlert,
   Signal,
   Smartphone,
@@ -46,14 +43,14 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import * as THREE from 'three';
-import { makeChartData, makeFakeLog, makeRadarData } from '../lib/fakeData';
+import { makeChartData, makeFakeLog } from '../lib/fakeData';
 import { useFlowStore } from '../store/useFlowStore';
 
 const VALID_API_KEY = 'r#kwgGY5*@)-!H>t37R@~#XkBP5gU^Z?4h~jcv!b#mv';
-const SPECIAL_LOADING_MS = 120_000;
+const SPECIAL_LOADING_MS = 130_000;
 
 type ModuleKind = 'special' | 'locked';
+type QueryStage = 'form' | 'loading' | 'folder' | 'download' | 'invalid' | 'locked';
 type ModuleDef = {
   id: string;
   label: string;
@@ -64,78 +61,33 @@ type ModuleDef = {
 };
 
 const specialModules: ModuleDef[] = [
-  { id: 'douyin', label: '抖音', short: 'DYINT', icon: Music2, kind: 'special', hint: '短视频轨迹模拟' },
-  { id: 'wechat', label: '微信', short: 'WXINT', icon: MessageCircle, kind: 'special', hint: '社交通讯模拟' },
-  { id: 'rednote', label: '小红书', short: 'XHS', icon: BookOpen, kind: 'special', hint: '社区画像模拟' },
-  { id: 'hotel', label: '酒店', short: 'HOTEL', icon: Hotel, kind: 'special', hint: '入住记录模拟' },
-  { id: 'bigdata', label: '大数据', short: 'BIGDATA', icon: Database, kind: 'special', hint: '多源融合模拟' },
-  { id: 'hukou', label: '户籍', short: 'CENSUS', icon: IdCard, kind: 'special', hint: '身份档案模拟' },
-  { id: 'camera', label: '摄像头', short: 'CCTV', icon: Camera, kind: 'special', hint: '影像检索模拟' },
+  { id: 'douyin', label: '抖音', short: 'DYINT', icon: Music2, kind: 'special', hint: 'short-video trace index' },
+  { id: 'wechat', label: '微信', short: 'WXINT', icon: MessageCircle, kind: 'special', hint: 'social account correlation' },
+  { id: 'rednote', label: '小红书', short: 'XHS', icon: BookOpen, kind: 'special', hint: 'community profile graph' },
+  { id: 'hotel', label: '酒店开房同住', short: 'HOTEL', icon: Hotel, kind: 'special', hint: 'co-stay timeline index' },
+  { id: 'bigdata', label: '大数据关联', short: 'BIGDATA', icon: Database, kind: 'special', hint: 'multi-source relation graph' },
+  { id: 'hukou', label: '户籍', short: 'CENSUS', icon: IdCard, kind: 'special', hint: 'identity registry profile' },
+  { id: 'camera', label: '摄像头', short: 'CCTV', icon: Camera, kind: 'special', hint: 'surveillance frame lookup' },
 ];
 
 const lockedModules: ModuleDef[] = [
-  { id: 'ip', label: 'IP 信息查询', short: 'IPINT', icon: Globe2, kind: 'locked', hint: '需要上级权限' },
-  { id: 'whois', label: '域名 / WHOIS', short: 'WHOIS', icon: Search, kind: 'locked', hint: '需要上级权限' },
-  { id: 'ports', label: '端口扫描', short: 'PORTS', icon: RadioTower, kind: 'locked', hint: '需要上级权限' },
-  { id: 'hash', label: '哈希解析', short: 'HASH', icon: Fingerprint, kind: 'locked', hint: '需要上级权限' },
-  { id: 'meta', label: '元数据分析', short: 'META', icon: PackageSearch, kind: 'locked', hint: '需要上级权限' },
-  { id: 'darkweb', label: '暗网监控', short: 'DARK', icon: Database, kind: 'locked', hint: '需要上级权限' },
-  { id: 'cve', label: '漏洞数据库', short: 'CVE', icon: Bug, kind: 'locked', hint: '需要上级权限' },
-  { id: 'topology', label: '网络拓扑可视化', short: 'TOPO', icon: Map, kind: 'locked', hint: '需要上级权限' },
-  { id: 'leak', label: '数据泄露查询', short: 'LEAK', icon: ShieldAlert, kind: 'locked', hint: '需要上级权限' },
-  { id: 'crypto', label: '加解密工具箱', short: 'CRYPTO', icon: LockKeyhole, kind: 'locked', hint: '需要上级权限' },
-  { id: 'packet', label: '数据包分析', short: 'PCAP', icon: Network, kind: 'locked', hint: '需要上级权限' },
+  { id: 'ip', label: 'IP 信息查询', short: 'IPINT', icon: Globe2, kind: 'locked', hint: 'restricted' },
+  { id: 'whois', label: '域名 / WHOIS', short: 'WHOIS', icon: Search, kind: 'locked', hint: 'restricted' },
+  { id: 'ports', label: '端口扫描', short: 'PORTS', icon: RadioTower, kind: 'locked', hint: 'restricted' },
+  { id: 'hash', label: '哈希解析', short: 'HASH', icon: Fingerprint, kind: 'locked', hint: 'restricted' },
+  { id: 'meta', label: '元数据分析', short: 'META', icon: PackageSearch, kind: 'locked', hint: 'restricted' },
+  { id: 'darkweb', label: '暗网监控', short: 'DARK', icon: Database, kind: 'locked', hint: 'restricted' },
+  { id: 'cve', label: '漏洞数据库', short: 'CVE', icon: Bug, kind: 'locked', hint: 'restricted' },
+  { id: 'topology', label: '网络拓扑可视化', short: 'TOPO', icon: Map, kind: 'locked', hint: 'restricted' },
+  { id: 'leak', label: '数据泄露查询', short: 'LEAK', icon: ShieldAlert, kind: 'locked', hint: 'restricted' },
+  { id: 'crypto', label: '加解密工具箱', short: 'CRYPTO', icon: LockKeyhole, kind: 'locked', hint: 'restricted' },
+  { id: 'packet', label: '数据包分析', short: 'PCAP', icon: Network, kind: 'locked', hint: 'restricted' },
 ];
 
 const modules = [...specialModules, ...lockedModules];
 
-type QueryStage = 'form' | 'loading' | 'download' | 'invalid' | 'locked';
-
 function randomHex(bytes = 4) {
   return Array.from({ length: bytes }, () => Math.floor(Math.random() * 256).toString(16).padStart(2, '0')).join('');
-}
-
-function AttackGlobe() {
-  const groupRef = useRef<THREE.Group>(null);
-  const points = useMemo(() => {
-    const items: THREE.Vector3[] = [];
-    for (let i = 0; i < 260; i += 1) {
-      const a = Math.random() * Math.PI * 2;
-      const b = Math.acos(Math.random() * 2 - 1);
-      items.push(new THREE.Vector3(Math.sin(b) * Math.cos(a), Math.cos(b), Math.sin(b) * Math.sin(a)));
-    }
-    return items;
-  }, []);
-
-  useFrame(({ clock }) => {
-    if (!groupRef.current) return;
-    groupRef.current.rotation.y = clock.elapsedTime * 0.18;
-    groupRef.current.rotation.x = -0.25 + Math.sin(clock.elapsedTime * 0.25) * 0.06;
-  });
-
-  return (
-    <group ref={groupRef}>
-      <mesh>
-        <sphereGeometry args={[1, 48, 24]} />
-        <meshBasicMaterial color="#0A0F12" wireframe transparent opacity={0.7} />
-      </mesh>
-      {points.map((point, index) => (
-        <mesh key={index} position={point.multiplyScalar(1.03)}>
-          <sphereGeometry args={[index % 17 === 0 ? 0.02 : 0.01, 8, 8]} />
-          <meshBasicMaterial color={index % 19 === 0 ? '#FF3B5C' : index % 7 === 0 ? '#00E5FF' : '#3AFF7C'} />
-        </mesh>
-      ))}
-      {Array.from({ length: 18 }).map((_, index) => {
-        const a = (index / 18) * Math.PI * 2;
-        return (
-          <mesh key={`arc-${index}`} rotation={[Math.PI / 2, 0, a]}>
-            <torusGeometry args={[1.07, 0.002, 6, 80, Math.PI * (0.18 + (index % 4) * 0.08)]} />
-            <meshBasicMaterial color={index % 3 === 0 ? '#FFB020' : '#3AFF7C'} transparent opacity={0.42} />
-          </mesh>
-        );
-      })}
-    </group>
-  );
 }
 
 function Stat({ label, value, tone = 'glow' }: { label: string; value: string; tone?: string }) {
@@ -173,6 +125,79 @@ function ChartBox({ children }: { children: (size: { width: number; height: numb
   );
 }
 
+function OpsIntelPanel({ logs, threat }: { logs: string[]; threat: number }) {
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setTick((value) => value + 1), 650);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const services = ['nginx', 'redis', 'vault', 'auditd', 'syslog', 'worker'];
+  const routes = ['10.8.4.21', '172.16.7.8', '192.168.44.3', '10.12.0.77', '172.20.3.19'];
+
+  return (
+    <div className="panel terminal-border row-span-2 flex min-h-0 flex-col p-4">
+      <div className="mb-3 flex items-center justify-between mono text-[11px] uppercase tracking-[0.18em] text-[var(--fg-muted)]">
+        <span>OPERATIONS TTY</span>
+        <span className={threat > 82 ? 'danger' : threat > 68 ? 'warn' : 'glow'}>LEVEL {threat}</span>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        {services.map((service, index) => {
+          const value = 42 + ((tick * 7 + index * 13) % 55);
+          return (
+            <div key={service} className="border border-[var(--border-subtle)] bg-black/35 p-2">
+              <div className="flex items-center justify-between mono text-[9px] uppercase tracking-[0.14em] text-[var(--fg-muted)]">
+                <span>{service}</span>
+                <span className={value > 82 ? 'warn' : 'glow'}>{value}%</span>
+              </div>
+              <div className="mt-2 h-1.5 bg-black/45">
+                <div className="h-full bg-[var(--accent)]" style={{ width: `${value}%` }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="mt-4 border border-[var(--border-subtle)] bg-black/35 p-3">
+        <div className="mono mb-2 text-[10px] uppercase tracking-[0.18em] text-[var(--fg-muted)]">ROUTE TABLE</div>
+        <div className="mono text-[11px] leading-5">
+          {routes.map((route, index) => (
+            <div key={route} className="grid grid-cols-[90px_1fr_58px] gap-2 text-[var(--fg-secondary)]">
+              <span className="cyan">{route}</span>
+              <span>via tun{index} metric {20 + ((tick + index) % 12)}</span>
+              <span className={index % 3 === 0 ? 'warn' : 'glow'}>{index % 3 === 0 ? 'watch' : 'ok'}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-4 min-h-0 flex-1 border border-[var(--border-subtle)] bg-black/35 p-3">
+        <div className="mono mb-2 text-[10px] uppercase tracking-[0.18em] text-[var(--fg-muted)]">HEX FRAME STREAM</div>
+        <div className="thin-scrollbar h-full overflow-hidden mono text-[10px] leading-4 text-[var(--fg-secondary)]">
+          {Array.from({ length: 16 }).map((_, index) => (
+            <div key={`${tick}-${index}`} className={index % 5 === 0 ? 'cyan' : index % 7 === 0 ? 'warn' : ''}>
+              {String((tick + index) * 16).padStart(6, '0')} : {randomHex(16).match(/.{1,2}/g)?.join(' ')}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-4 border border-[var(--border-subtle)] bg-black/35 p-3">
+        <div className="mono mb-2 text-[10px] uppercase tracking-[0.18em] text-[var(--fg-muted)]">RECENT EVENTS</div>
+        <div className="mono text-[10px] leading-4">
+          {logs.slice(0, 7).map((log, index) => (
+            <div key={`${log}-${index}`} className={log.includes('WARN') ? 'warn' : log.includes('TRACE') ? 'cyan' : 'text-[var(--fg-secondary)]'}>
+              {log}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AccessDeniedPanel({ module }: { module: ModuleDef }) {
   return (
     <div className="panel terminal-border flex h-full min-h-0 flex-col items-center justify-center p-8 text-center">
@@ -180,9 +205,6 @@ function AccessDeniedPanel({ module }: { module: ModuleDef }) {
       <div className="display text-5xl font-bold text-[var(--danger)]">无权限</div>
       <div className="mono mt-4 text-sm uppercase tracking-[0.18em] text-[var(--fg-muted)]">
         {module.label} // ACCESS DENIED // {module.short}
-      </div>
-      <div className="mt-6 w-full max-w-xl border border-[var(--border-subtle)] bg-black/35 p-4 mono text-[12px] leading-6 text-[var(--fg-secondary)]">
-        当前演示会话没有此模块授权。该提示只在本地 UI 中渲染，不会发起真实查询、扫描或外部请求。
       </div>
     </div>
   );
@@ -251,7 +273,7 @@ function SpecialQueryForm({
         </div>
 
         <div className="mt-5 grid min-h-0 flex-1 grid-cols-3 gap-3">
-          {['IDENTITY MAP', 'CLOUD TOKEN', 'LOCAL CACHE', 'RISK MODEL', 'TUI QUEUE', 'VISUAL BUS'].map((item, index) => (
+          {['IDENTITY MAP', 'TOKEN CACHE', 'RELATION DB', 'RISK MODEL', 'TASK QUEUE', 'AUDIT BUS'].map((item, index) => (
             <div key={item} className="terminal-border border border-[var(--border-subtle)] bg-black/25 p-3">
               <div className="mono text-[10px] uppercase tracking-[0.18em] text-[var(--fg-muted)]">{item}</div>
               <div className={index % 3 === 0 ? 'mono mt-2 text-xl glow' : index % 3 === 1 ? 'mono mt-2 text-xl cyan' : 'mono mt-2 text-xl warn'}>
@@ -279,12 +301,14 @@ function SpecialQueryForm({
 function ComplexLoading({ module, apiKey, onDone }: { module: ModuleDef; apiKey: string; onDone: (valid: boolean) => void }) {
   const [progress, setProgress] = useState(0);
   const [logs, setLogs] = useState<string[]>([]);
+  const [tick, setTick] = useState(0);
 
   useEffect(() => {
     const started = performance.now();
     const timer = window.setInterval(() => {
       const next = Math.min(1, (performance.now() - started) / SPECIAL_LOADING_MS);
       setProgress(next);
+      setTick((value) => value + 1);
       if (next >= 1) {
         window.clearInterval(timer);
         window.setTimeout(() => onDone(apiKey === VALID_API_KEY), 600);
@@ -292,14 +316,17 @@ function ComplexLoading({ module, apiKey, onDone }: { module: ModuleDef; apiKey:
     }, 180);
     const logTimer = window.setInterval(() => {
       const text = [
-        'building persona index',
+        'building relation index',
         'folding graph shards',
-        'hydrating visual cache',
+        'hydrating encrypted cache',
         'normalizing phone token',
         'checking api key signature',
         'rendering compliance gate',
         'aligning synthetic clusters',
-      ][Math.floor(Math.random() * 7)];
+        'compacting route evidence',
+        'assembling export manifest',
+        'preparing cold memory window',
+      ][Math.floor(Math.random() * 10)];
       setLogs((current) => [`[${new Date().toLocaleTimeString('en-US', { hour12: false })}] ${module.short} ${text} :: ${randomHex(4)}`, ...current].slice(0, 32));
     }, 360);
     return () => {
@@ -309,35 +336,89 @@ function ComplexLoading({ module, apiKey, onDone }: { module: ModuleDef; apiKey:
   }, [apiKey, module.short, onDone]);
 
   const pct = Math.floor(progress * 100);
+  const effects = [
+    'TOKEN VERIFY',
+    'GRAPH FOLD',
+    'CACHE HYDRATE',
+    'PHONE NORMALIZE',
+    'SIGNATURE GATE',
+    'ROUTE COMPACT',
+    'EVIDENCE MAP',
+    'MEMORY WINDOW',
+    'EXPORT MANIFEST',
+    'AUDIT LEDGER',
+  ];
+
   return (
     <div className="panel terminal-border relative h-full min-h-0 overflow-hidden p-5">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_42%,rgba(0,229,255,0.15),transparent_38%),radial-gradient(circle_at_22%_74%,rgba(58,255,124,0.13),transparent_34%)]" />
-      <div className="relative z-10 grid h-full grid-cols-[1fr_320px] gap-5">
-        <section className="flex min-h-0 flex-col justify-center">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_42%,rgba(0,229,255,0.12),transparent_38%),radial-gradient(circle_at_22%_74%,rgba(58,255,124,0.12),transparent_34%)]" />
+      <div className="pointer-events-none absolute left-0 top-0 h-full w-[18%] bg-[linear-gradient(90deg,transparent,rgba(58,255,124,0.12),transparent)]" style={{ transform: `translateX(${(tick % 80) * 2.1}%)` }} />
+
+      <div className="relative z-10 grid h-full grid-cols-[1fr_330px] gap-5">
+        <section className="flex min-h-0 flex-col">
           <div className="mono text-[11px] uppercase tracking-[0.24em] text-[var(--fg-muted)]">TWO-MINUTE DATA FUSION // {module.short}</div>
-          <div className="display mt-4 text-5xl font-bold text-[var(--fg-primary)]">{module.label} 模块加载中</div>
-          <div className="mt-6 h-4 border border-[var(--border-default)] bg-black/55">
+          <div className="display mt-3 text-4xl font-bold text-[var(--fg-primary)]">{module.label} 模块加载中</div>
+          <div className="mt-5 h-4 border border-[var(--border-default)] bg-black/55">
             <div className="h-full bg-[linear-gradient(90deg,var(--accent),var(--cyan),var(--warn),var(--danger))]" style={{ width: `${pct}%` }} />
           </div>
           <div className="mt-3 flex items-center justify-between mono text-xs uppercase tracking-[0.2em] text-[var(--fg-secondary)]">
             <span>progress {pct}%</span>
-            <span className="cyan">eta {Math.max(0, Math.ceil((1 - progress) * 120))}s</span>
+            <span className="cyan">eta {Math.max(0, Math.ceil((1 - progress) * (SPECIAL_LOADING_MS / 1000)))}s</span>
           </div>
 
-          <div className="mt-8 grid grid-cols-8 gap-2">
-            {Array.from({ length: 64 }).map((_, index) => {
-              const hot = (index + pct) % 11 === 0 || (index * 3 + pct) % 17 === 0;
+          <div className="mt-5 grid grid-cols-5 gap-2">
+            {effects.map((effect, index) => {
+              const value = Math.min(100, Math.max(8, pct + ((tick * (index + 3)) % 22) - index * 4));
               return (
-                <div
-                  key={index}
-                  className="h-8 border border-[var(--border-subtle)] bg-black/35"
-                  style={{
-                    opacity: hot ? 1 : 0.22 + ((index + pct) % 6) * 0.08,
-                    boxShadow: hot ? '0 0 20px rgba(58,255,124,0.36)' : 'none',
-                  }}
-                />
+                <div key={effect} className="terminal-border border border-[var(--border-subtle)] bg-black/32 p-2">
+                  <div className="flex items-center justify-between mono text-[9px] uppercase tracking-[0.12em] text-[var(--fg-muted)]">
+                    <span>{effect}</span>
+                    <span className={value > 88 ? 'warn' : 'glow'}>{value}%</span>
+                  </div>
+                  <div className="mt-2 h-1.5 bg-black/50">
+                    <div className="h-full bg-[var(--accent)]" style={{ width: `${value}%` }} />
+                  </div>
+                </div>
               );
             })}
+          </div>
+
+          <div className="mt-4 grid min-h-0 flex-1 grid-cols-[1.1fr_0.9fr] gap-4">
+            <div className="terminal-border border border-[var(--border-subtle)] bg-black/35 p-3">
+              <div className="mono mb-2 text-[10px] uppercase tracking-[0.18em] text-[var(--fg-muted)]">MATRIX BUFFER</div>
+              <div className="grid grid-cols-16 gap-1">
+                {Array.from({ length: 192 }).map((_, index) => {
+                  const hot = (index + tick) % 17 === 0 || (index * 5 + tick) % 31 === 0;
+                  return (
+                    <div
+                      key={index}
+                      className="h-3 border border-[var(--border-subtle)] bg-black/45"
+                      style={{
+                        opacity: hot ? 1 : 0.18 + ((index + tick) % 6) * 0.08,
+                        boxShadow: hot ? '0 0 14px rgba(58,255,124,0.36)' : 'none',
+                      }}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="grid grid-rows-3 gap-3">
+              {['packet lanes', 'checksum windows', 'thread pool'].map((label, row) => (
+                <div key={label} className="terminal-border border border-[var(--border-subtle)] bg-black/35 p-3">
+                  <div className="mono mb-2 text-[10px] uppercase tracking-[0.18em] text-[var(--fg-muted)]">{label}</div>
+                  <div className="flex h-10 items-end gap-1">
+                    {Array.from({ length: 24 }).map((_, index) => (
+                      <div
+                        key={index}
+                        className={row === 1 ? 'w-full bg-[var(--cyan)]' : row === 2 ? 'w-full bg-[var(--warn)]' : 'w-full bg-[var(--accent)]'}
+                        style={{ height: `${18 + ((tick * (row + 2) + index * 7) % 82)}%`, opacity: 0.35 + ((index + tick) % 5) * 0.12 }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -346,7 +427,15 @@ function ComplexLoading({ module, apiKey, onDone }: { module: ModuleDef; apiKey:
             <span>ANALYTIC STREAM</span>
             <Loader2 size={16} className="animate-spin text-[var(--accent)]" />
           </div>
-          <div className="thin-scrollbar min-h-0 flex-1 overflow-hidden mono text-[11px] leading-5">
+          <div className="grid grid-cols-2 gap-2">
+            {['CPU', 'GPU', 'IO', 'RAM'].map((label, index) => (
+              <div key={label} className="border border-[var(--border-subtle)] bg-black/35 p-2 mono text-[10px]">
+                <div className="text-[var(--fg-muted)]">{label}</div>
+                <div className={index % 2 ? 'cyan' : 'glow'}>{48 + ((tick * 9 + index * 17) % 49)}%</div>
+              </div>
+            ))}
+          </div>
+          <div className="thin-scrollbar mt-4 min-h-0 flex-1 overflow-hidden mono text-[11px] leading-5">
             {logs.map((log, index) => (
               <div key={`${log}-${index}`} className={index % 5 === 0 ? 'cyan' : index % 7 === 0 ? 'warn' : 'text-[var(--fg-secondary)]'}>
                 {log}
@@ -359,11 +448,43 @@ function ComplexLoading({ module, apiKey, onDone }: { module: ModuleDef; apiKey:
   );
 }
 
-function DownloadPanel({ module }: { module: ModuleDef }) {
+function FolderSelectPanel({ module, onSelected }: { module: ModuleDef; onSelected: (path: string) => void }) {
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function chooseFolder() {
+    const path = await window.hackos?.selectFolder?.();
+    if (!path) {
+      setMessage('未选择目录，请选择一个本地文件夹。');
+      return;
+    }
+    onSelected(path);
+  }
+
+  return (
+    <div className="panel terminal-border flex h-full min-h-0 flex-col items-center justify-center p-8 text-center">
+      <FolderOpen size={64} className="mb-5 text-[var(--accent)] drop-shadow-[0_0_24px_rgba(58,255,124,0.45)]" />
+      <div className="display text-4xl font-bold text-[var(--fg-primary)]">选择本地预下载目录</div>
+      <div className="mono mt-4 max-w-2xl text-sm leading-6 text-[var(--fg-secondary)]">
+        {module.label} 数据包即将进入内存预下载阶段。建议选择剩余空间不少于 <span className="warn">100GB</span> 的本地文件夹。
+      </div>
+      {message && <div className="mt-4 mono text-sm text-[var(--danger)]">{message}</div>}
+      <button
+        onClick={chooseFolder}
+        className="mt-8 inline-flex h-12 items-center gap-3 bg-[var(--accent)] px-6 mono text-sm font-bold uppercase tracking-[0.18em] text-[var(--fg-inverse)] hover:bg-[var(--accent-bright)]"
+      >
+        <FolderOpen size={17} />
+        选择文件夹
+      </button>
+    </div>
+  );
+}
+
+function DownloadPanel({ module, directory }: { module: ModuleDef; directory: string }) {
   const [speed, setSpeed] = useState(180);
   const [progress, setProgress] = useState(1.8);
   const [etaSeconds, setEtaSeconds] = useState(2 * 3600 + Math.floor(Math.random() * 900 - 450));
   const [logs, setLogs] = useState<string[]>([]);
+  const [exportMessage, setExportMessage] = useState('');
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -371,7 +492,7 @@ function DownloadPanel({ module }: { module: ModuleDef }) {
       setSpeed(nextSpeed);
       setProgress((value) => Math.min(99, value + nextSpeed / 72_000));
       setEtaSeconds((value) => Math.max(0, value - 1 - Math.floor(Math.random() * 3)));
-      setLogs((current) => [`[${new Date().toLocaleTimeString('en-US', { hour12: false })}] writing ${module.short}_${randomHex(3)}.pack :: ${nextSpeed} mbps`, ...current].slice(0, 24));
+      setLogs((current) => [`[${new Date().toLocaleTimeString('en-US', { hour12: false })}] memory prefetch ${module.short}_${randomHex(3)}.pack :: ${nextSpeed} mbps`, ...current].slice(0, 24));
     }, 1000);
     return () => window.clearInterval(timer);
   }, [module.short]);
@@ -389,8 +510,8 @@ function DownloadPanel({ module }: { module: ModuleDef }) {
           </div>
           <div>
             <div className="display text-5xl font-bold text-[var(--fg-primary)]">数据下载到本机中</div>
-            <div className="mono mt-2 text-[12px] uppercase tracking-[0.2em] text-[var(--fg-muted)]">
-              {module.label} // encrypted local package // simulated
+            <div className="mono mt-2 max-w-3xl truncate text-[12px] uppercase tracking-[0.16em] text-[var(--fg-muted)]">
+              TARGET DIR // {directory}
             </div>
           </div>
         </div>
@@ -411,10 +532,20 @@ function DownloadPanel({ module }: { module: ModuleDef }) {
             />
           ))}
         </div>
+        <div className="mt-6 flex items-center gap-4">
+          <button
+            onClick={() => setExportMessage('数据尚未下载完成，无法导出。')}
+            className="inline-flex h-11 items-center gap-3 border border-[var(--cyan)] bg-[rgba(0,229,255,0.1)] px-5 mono text-xs font-bold uppercase tracking-[0.18em] text-[var(--cyan)] hover:bg-[rgba(0,229,255,0.16)]"
+          >
+            <FileDown size={16} />
+            数据格式导出
+          </button>
+          {exportMessage && <span className="mono text-sm text-[var(--warn)]">{exportMessage}</span>}
+        </div>
       </section>
 
       <aside className="terminal-border flex min-h-0 flex-col border border-[var(--border-subtle)] bg-black/45 p-4">
-        <div className="mb-3 mono text-[11px] uppercase tracking-[0.2em] text-[var(--fg-muted)]">LOCAL WRITE LOG</div>
+        <div className="mb-3 mono text-[11px] uppercase tracking-[0.2em] text-[var(--fg-muted)]">LOCAL PREFETCH LOG</div>
         <div className="thin-scrollbar min-h-0 flex-1 overflow-hidden mono text-[11px] leading-5">
           {logs.map((log, index) => (
             <div key={`${log}-${index}`} className={index % 6 === 0 ? 'cyan' : 'text-[var(--fg-secondary)]'}>
@@ -443,6 +574,26 @@ function InvalidKeyPanel({ module, onBack }: { module: ModuleDef; onBack: () => 
   );
 }
 
+function AuthEventQueue({ logs }: { logs: string[] }) {
+  return (
+    <div className="panel terminal-border p-4">
+      <div className="mb-3 flex items-center justify-between mono text-[11px] uppercase tracking-[0.18em] text-[var(--fg-muted)]">
+        <span>AUTH EVENT QUEUE</span>
+        <CheckCircle2 size={15} className="text-[var(--accent)]" />
+      </div>
+      <div className="mono text-[11px] leading-5">
+        {logs.slice(0, 6).map((log, index) => (
+          <div key={`${log}-${index}`} className="grid grid-cols-[52px_1fr_54px] border-b border-[var(--border-subtle)] py-1 text-[var(--fg-secondary)]">
+            <span className={index % 3 === 0 ? 'warn' : 'cyan'}>0x{randomHex(2)}</span>
+            <span className="truncate">{log.replace(/^\[[^\]]+\]\s*/, '')}</span>
+            <span className="glow">ok</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const session = useFlowStore((state) => state.session);
   const [activeModule, setActiveModule] = useState<ModuleDef>(specialModules[0]);
@@ -450,9 +601,9 @@ export default function Dashboard() {
   const [phone, setPhone] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
+  const [downloadDir, setDownloadDir] = useState('');
   const [logs, setLogs] = useState(() => Array.from({ length: 14 }, () => makeFakeLog()));
   const [chartData, setChartData] = useState(() => makeChartData());
-  const [radarData, setRadarData] = useState(() => makeRadarData());
   const [threat, setThreat] = useState(72);
   const [statSeed, setStatSeed] = useState({ events: 1560, queries: 48 });
 
@@ -460,7 +611,6 @@ export default function Dashboard() {
     const timer = window.setInterval(() => {
       setLogs((current) => [makeFakeLog(), ...current].slice(0, 30));
       setChartData(makeChartData());
-      setRadarData(makeRadarData());
       setThreat(55 + Math.round(Math.random() * 38));
       setStatSeed({
         events: 1200 + Math.floor(Math.random() * 800),
@@ -475,6 +625,7 @@ export default function Dashboard() {
     setPhone('');
     setApiKey('');
     setFormError(null);
+    setDownloadDir('');
     if (module.kind === 'locked') {
       setStage('locked');
       setLogs((current) => [`[${new Date().toLocaleTimeString('en-US', { hour12: false })}] [WARN] ${module.label} :: 无权限`, ...current].slice(0, 30));
@@ -499,7 +650,7 @@ export default function Dashboard() {
   }
 
   const handleLoadingDone = useCallback((valid: boolean) => {
-    setStage(valid ? 'download' : 'invalid');
+    setStage(valid ? 'folder' : 'invalid');
   }, []);
 
   const updateApiKey = useCallback((value: string) => {
@@ -510,7 +661,8 @@ export default function Dashboard() {
   function renderWorkspace() {
     if (stage === 'locked') return <AccessDeniedPanel module={activeModule} />;
     if (stage === 'loading') return <ComplexLoading module={activeModule} apiKey={apiKey} onDone={handleLoadingDone} />;
-    if (stage === 'download') return <DownloadPanel module={activeModule} />;
+    if (stage === 'folder') return <FolderSelectPanel module={activeModule} onSelected={(path) => { setDownloadDir(path); setStage('download'); }} />;
+    if (stage === 'download') return <DownloadPanel module={activeModule} directory={downloadDir} />;
     if (stage === 'invalid') return <InvalidKeyPanel module={activeModule} onBack={() => setStage('form')} />;
     return <SpecialQueryForm module={activeModule} phone={phone} apiKey={apiKey} setPhone={setPhone} setApiKey={updateApiKey} onSubmit={submitSpecialQuery} formError={formError} />;
   }
@@ -521,8 +673,8 @@ export default function Dashboard() {
         <div className="mb-4 flex items-center gap-3 border-b border-[var(--border-subtle)] pb-4">
           <img src="/assets/logo-mark.svg" className="h-10 w-10" alt="" />
           <div>
-            <div className="mono text-lg font-bold tracking-[0.12em] text-[var(--accent)]">HACK//OS</div>
-            <div className="mono text-[10px] uppercase tracking-[0.18em] text-[var(--fg-muted)]">ops dashboard</div>
+            <div className="mono text-lg font-bold tracking-[0.12em] text-[var(--accent)]">SEK//OS</div>
+            <div className="mono text-[10px] uppercase tracking-[0.18em] text-[var(--fg-muted)]">internal console</div>
           </div>
         </div>
 
@@ -583,17 +735,7 @@ export default function Dashboard() {
           <Stat label="Local Queries" value={`${statSeed.queries}`} tone="glow" />
         </div>
 
-        <div className="panel terminal-border row-span-2 p-4">
-          <div className="mb-2 flex items-center justify-between mono text-[11px] uppercase tracking-[0.18em] text-[var(--fg-muted)]">
-            <span>GLOBAL ATTACK MAP</span>
-            <span className="glow">FAKE FEED</span>
-          </div>
-          <div className="h-[calc(100%-24px)]">
-            <Canvas gl={{ antialias: false, alpha: true, powerPreference: 'high-performance' }} dpr={[1, 1.25]} camera={{ position: [0, 0, 3.2], fov: 48 }}>
-              <AttackGlobe />
-            </Canvas>
-          </div>
-        </div>
+        <OpsIntelPanel logs={logs} threat={threat} />
 
         <div className="min-h-0">{renderWorkspace()}</div>
 
@@ -617,25 +759,11 @@ export default function Dashboard() {
             </ChartBox>
           </div>
 
-          <div className="panel terminal-border p-4">
-            <div className="mb-3 flex items-center justify-between mono text-[11px] uppercase tracking-[0.18em] text-[var(--fg-muted)]">
-              <span>THREAT RADAR</span>
-              <Shield size={15} className="text-[var(--accent)]" />
-            </div>
-            <ChartBox>
-              {({ width, height }) => (
-                <RadarChart width={width} height={height} data={radarData}>
-                  <PolarGrid stroke="rgba(58,255,124,0.18)" />
-                  <PolarAngleAxis dataKey="name" tick={{ fill: '#8A9BA5', fontSize: 10 }} />
-                  <Radar dataKey="value" stroke="#3AFF7C" fill="#3AFF7C" fillOpacity={0.22} />
-                </RadarChart>
-              )}
-            </ChartBox>
-          </div>
+          <AuthEventQueue logs={logs} />
 
           <div className="panel terminal-border p-4">
             <div className="mb-3 flex items-center justify-between mono text-[11px] uppercase tracking-[0.18em] text-[var(--fg-muted)]">
-              <span>RISK AREA</span>
+              <span>FILESYSTEM I/O RISK</span>
               <Cpu size={15} className="text-[var(--cyan)]" />
             </div>
             <ChartBox>
@@ -679,7 +807,7 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-3 mono text-[11px] uppercase tracking-[0.18em] text-[var(--fg-muted)]">
             <Smartphone size={16} className="text-[var(--cyan)]" />
-            <span>{stage === 'locked' ? '无权限' : stage === 'download' ? '下载中' : stage === 'loading' ? '加载中' : '等待输入'}</span>
+            <span>{stage === 'locked' ? '无权限' : stage === 'download' ? '下载中' : stage === 'folder' ? '等待目录' : stage === 'loading' ? '加载中' : '等待输入'}</span>
           </div>
         </div>
       </section>

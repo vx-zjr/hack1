@@ -68,10 +68,10 @@ Y:\hack1
   cloud verification page for a random 5-10 seconds before success or failure is
   resolved; empty fields return to the welcome page with inline required-field
   messages after that verification sequence.
-- 3D visuals: the welcome model panel was fully rewritten as an independent
-  crossfade renderer. It no longer reuses the old morph state machine or model
-  generator path. Twelve standalone high-density point-cloud forms rotate in
-  sequence, with only the current and previous forms mounted during transitions.
+- 3D visuals: the welcome model panel uses a single high-density shader point
+  buffer with 35 non-skull forms. Transitions now dissolve the previous form into
+  a scatter field, then gather those particles into the next form. Normal
+  blending is used to avoid the white solid-line artifacts from additive glow.
 - Background: faster, stronger fullscreen WebGL shader smoke, grid, scanline, and
   terminal chrome.
 - Auth animation: 5-10 second cloud verification particle aggregation with denser
@@ -91,7 +91,8 @@ Y:\hack1
   chart, threat level, and strict permission behavior. Dedicated simulated pages
   are available for `抖音`, `微信`, `小红书`, `酒店开房同住`, `大数据关联`, `户籍`, and
   `摄像头`; each asks for `手机号` and `APIKEY`, then runs a 130 second local
-  loading animation with 10+ visible status/effect groups. The specified API key
+  loading animation with 10 rotating lightweight cybersecurity effects, only one
+  mounted at a time for steadier 60 FPS. The specified API key
   opens a local folder selection step recommending 100GB free space, then a
   simulated download page with dynamic 100-300 mbps speed and about two hours
   remaining. Empty APIKEY submissions show `请输入APIKEY`. All other legacy modules
@@ -114,6 +115,9 @@ npm run dist
 `npm run dev` starts Vite HMR and opens the frameless fullscreen Electron window.
 DevTools open automatically in development and can also be toggled with
 `Ctrl+Shift+I`.
+
+The Windows installer is built with a safe intermediate NSIS filename and then
+renamed locally to `release\setup.exe`.
 
 The dev command launches Electron through `scripts/start-electron.mjs`, which removes
 `ELECTRON_RUN_AS_NODE` from the child environment before starting Electron. This keeps

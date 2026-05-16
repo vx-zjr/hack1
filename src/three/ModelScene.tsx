@@ -1,6 +1,6 @@
 import { Canvas, useFrame } from '@react-three/fiber';
 import { PerspectiveCamera } from '@react-three/drei';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, type RefObject } from 'react';
 import * as THREE from 'three';
 
 const NODE_COUNT = 48000;
@@ -564,10 +564,21 @@ function makePhases() {
   return out;
 }
 
-function EntityPoints({ onFps, onStatus }: { onFps: (fps: number) => void; onStatus: (status: ModelStatus) => void }) {
+type HudRefs = {
+  formRef: RefObject<HTMLSpanElement | null>;
+  stateRef: RefObject<HTMLSpanElement | null>;
+  nameRef: RefObject<HTMLSpanElement | null>;
+  nextRef: RefObject<HTMLSpanElement | null>;
+  fpsRef: RefObject<HTMLSpanElement | null>;
+};
+
+function EntityPoints({ hud }: { hud: HudRefs }) {
   const forms = useMemo(makeForms, []);
   const phases = useMemo(makePhases, []);
   const scatters = useMemo(() => forms.map((_, index) => makeScatter(0x9000 + index * 137)), [forms]);
+  const initialFrom = useMemo(() => forms[0].positions.slice(), [forms]);
+  const initialTo = useMemo(() => forms[1].positions.slice(), [forms]);
+  const initialScatter = useMemo(() => scatters[0].slice(), [scatters]);
   const materialRef = useRef<THREE.ShaderMaterial>(null);
   const geometryRef = useRef<THREE.BufferGeometry>(null);
   const groupRef = useRef<THREE.Group>(null);
@@ -598,12 +609,10 @@ function EntityPoints({ onFps, onStatus }: { onFps: (fps: number) => void; onSta
 
   function publishStatus(phase: ModelStatus['phase']) {
     const state = stateRef.current;
-    onStatus({
-      current: state.current,
-      next: state.next,
-      phase,
-      name: forms[state.current].name,
-    });
+    if (hud.formRef.current) hud.formRef.current.textContent = `${String(state.current + 1).padStart(2, '0')}/35`;
+    if (hud.stateRef.current) hud.stateRef.current.textContent = phase === 'scatter' ? 'DISPERSE' : 'HOLD';
+    if (hud.nameRef.current) hud.nameRef.current.textContent = forms[state.current].name;
+    if (hud.nextRef.current) hud.nextRef.current.textContent = String(state.next + 1).padStart(2, '0');
   }
 
   function writeAttributes(current: number, next: number) {
@@ -681,7 +690,7 @@ function EntityPoints({ onFps, onStatus }: { onFps: (fps: number) => void; onSta
 
     state.frames += 1;
     if (clock.elapsedTime - state.fpsStartedAt >= 0.75) {
-      onFps(Math.round(state.frames / (clock.elapsedTime - state.fpsStartedAt)));
+      if (hud.fpsRef.current) hud.fpsRef.current.textContent = Math.round(state.frames / (clock.elapsedTime - state.fpsStartedAt)).toFixed(1);
       state.frames = 0;
       state.fpsStartedAt = clock.elapsedTime;
     }
@@ -692,9 +701,9 @@ function EntityPoints({ onFps, onStatus }: { onFps: (fps: number) => void; onSta
       <points frustumCulled={false}>
         <bufferGeometry ref={geometryRef}>
           <bufferAttribute attach="attributes-position" args={[ZERO_POSITIONS, 3]} />
-          <bufferAttribute attach="attributes-fromPosition" args={[forms[0].positions.slice(), 3]} />
-          <bufferAttribute attach="attributes-toPosition" args={[forms[1].positions.slice(), 3]} />
-          <bufferAttribute attach="attributes-scatterPosition" args={[scatters[0].slice(), 3]} />
+          <bufferAttribute attach="attributes-fromPosition" args={[initialFrom, 3]} />
+          <bufferAttribute attach="attributes-toPosition" args={[initialTo, 3]} />
+          <bufferAttribute attach="attributes-scatterPosition" args={[initialScatter, 3]} />
           <bufferAttribute attach="attributes-phase" args={[phases, 1]} />
         </bufferGeometry>
         <shaderMaterial
@@ -711,14 +720,22 @@ function EntityPoints({ onFps, onStatus }: { onFps: (fps: number) => void; onSta
   );
 }
 
-export function ModelScene() {
-  const [fps, setFps] = useState(60);
-  const [status, setStatus] = useState<ModelStatus>({
-    current: 0,
-    next: 1,
-    phase: 'hold',
-    name: FORM_NAMES[0],
-  });
+export const ModelScene = memo(function ModelScene() {
+  const formRef = useRef<HTMLSpanElement>(null);
+  const stateTextRef = useRef<HTMLSpanElement>(null);
+  const nameRef = useRef<HTMLSpanElement>(null);
+  const nextRef = useRef<HTMLSpanElement>(null);
+  const fpsRef = useRef<HTMLSpanElement>(null);
+  const hud = useMemo(
+    () => ({
+      formRef,
+      stateRef: stateTextRef,
+      nameRef,
+      nextRef,
+      fpsRef,
+    }),
+    [],
+  );
 
   return (
     <div className="relative h-full w-full overflow-visible">
@@ -730,7 +747,7 @@ export function ModelScene() {
       >
         <PerspectiveCamera makeDefault position={[0, 0, 6.45]} fov={42} />
         <ambientLight intensity={0.45} />
-        <EntityPoints onFps={setFps} onStatus={setStatus} />
+        <EntityPoints hud={hud} />
       </Canvas>
 
       <div className="pointer-events-none absolute inset-0 z-10 mono text-[10px] uppercase tracking-[0.18em] text-[var(--fg-muted)]">
@@ -739,16 +756,16 @@ export function ModelScene() {
           <br />
           <b className="text-[var(--fg-primary)]">ID</b> <span className="glow">0xSEK-09A</span>
           <br />
-          <b className="text-[var(--fg-primary)]">FORM</b> <span className="glow">{String(status.current + 1).padStart(2, '0')}/35</span>
+          <b className="text-[var(--fg-primary)]">FORM</b> <span ref={formRef} className="glow">01/35</span>
           <br />
-          <b className="text-[var(--fg-primary)]">STATE</b> <span className="cyan">{status.phase === 'scatter' ? 'DISPERSE' : 'HOLD'}</span>
+          <b className="text-[var(--fg-primary)]">STATE</b> <span ref={stateTextRef} className="cyan">HOLD</span>
         </div>
         <div className="terminal-border absolute right-5 top-5 p-3 text-right leading-5">
           MODEL //
           <br />
-          <b className="text-[var(--fg-primary)]">NAME</b> <span className="glow">{status.name}</span>
+          <b className="text-[var(--fg-primary)]">NAME</b> <span ref={nameRef} className="glow">{FORM_NAMES[0]}</span>
           <br />
-          <b className="text-[var(--fg-primary)]">NEXT</b> <span className="cyan">{String(status.next + 1).padStart(2, '0')}</span>
+          <b className="text-[var(--fg-primary)]">NEXT</b> <span ref={nextRef} className="cyan">02</span>
           <br />
           <b className="text-[var(--fg-primary)]">LINES</b> <span className="cyan">NONE</span>
         </div>
@@ -762,11 +779,11 @@ export function ModelScene() {
         <div className="terminal-border absolute bottom-5 right-5 p-3 text-right leading-5">
           SIGNATURE //
           <br />
-          <b className="text-[var(--fg-primary)]">HZ</b> <span className="glow">{fps.toFixed(1)}</span>
+          <b className="text-[var(--fg-primary)]">HZ</b> <span ref={fpsRef} className="glow">60.0</span>
           <br />
           <b className="text-[var(--fg-primary)]">SRC</b> <span className="cyan">REBUILT</span>
         </div>
       </div>
     </div>
   );
-}
+});

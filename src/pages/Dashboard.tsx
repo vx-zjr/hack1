@@ -920,7 +920,7 @@ export default function Dashboard() {
   const [apiKey, setApiKey] = useState('');
   const [apiError, setApiError] = useState('');
   const [selectedFolder, setSelectedFolder] = useState('');
-  const [soundEnabled, setSoundEnabled] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
   const [logs, setLogs] = useState<string[]>(() => Array.from({ length: 18 }, () => makeFakeLog()));
   const [chartData, setChartData] = useState(() => makeChartData(36));
 

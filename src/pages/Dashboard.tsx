@@ -29,6 +29,8 @@ import {
   Signal,
   Smartphone,
   TerminalSquare,
+  Volume2,
+  VolumeX,
   type LucideIcon,
 } from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis } from 'recharts';
@@ -82,70 +84,70 @@ const modules = [...specialModules, ...lockedModules];
 const loadingEffects = [
   {
     id: 'handshake',
-    title: 'REMOTE HANDSHAKE',
+    title: 'REMOTE SESSION NEGOTIATION',
     icon: Signal,
     accent: '#3AFF7C',
     metrics: ['SYN/ACK', 'TLS MASK', 'EDGE ROUTE', 'NODE TRUST'],
   },
   {
     id: 'tunnel',
-    title: 'LINK TUNNELING',
+    title: 'ROUTE TABLE RECONCILE',
     icon: RadioTower,
     accent: '#00E5FF',
     metrics: ['LATENCY', 'JITTER', 'RELAY HOPS', 'CHANNEL'],
   },
   {
     id: 'token',
-    title: 'TOKEN EXCHANGE',
+    title: 'KEYSTORE HANDSHAKE',
     icon: LockKeyhole,
     accent: '#FFDC5A',
     metrics: ['NONCE', 'SALT', 'VAULT', 'TTL'],
   },
   {
     id: 'pivot',
-    title: 'SESSION PIVOT MAP',
+    title: 'EDGE RELAY MAPPING',
     icon: Network,
     accent: '#FF697E',
     metrics: ['PIVOT', 'ACL', 'ROUTE', 'SCOPE'],
   },
   {
     id: 'packet',
-    title: 'PACKET TIMELINE',
+    title: 'PACKET BUFFER INDEX',
     icon: Activity,
     accent: '#6EC8FF',
     metrics: ['BURST', 'WINDOW', 'DROPS', 'SEQ'],
   },
   {
     id: 'vault',
-    title: 'CREDENTIAL VAULT',
+    title: 'ACCESS TOKEN AUDIT',
     icon: Fingerprint,
     accent: '#3AFF7C',
     metrics: ['HASH', 'PEPPER', 'REALM', 'LOCK'],
   },
   {
     id: 'dns',
-    title: 'DNS TRACEBACK',
+    title: 'DNS CACHE TRACE',
     icon: Globe2,
     accent: '#00E5FF',
     metrics: ['CNAME', 'ASN', 'CACHE', 'ZONE'],
   },
   {
     id: 'socket',
-    title: 'SOCKET GRAPH',
+    title: 'SOCKET STATE CHECK',
     icon: TerminalSquare,
     accent: '#FFDC5A',
     metrics: ['FD', 'QUEUE', 'RX/TX', 'KEEPALIVE'],
   },
   {
     id: 'firewall',
-    title: 'FIREWALL WINDOW',
+    title: 'FIREWALL RULE MIRROR',
     icon: ShieldAlert,
     accent: '#FF697E',
     metrics: ['RULESET', 'NAT', 'DROP', 'ALLOW'],
   },
   {
     id: 'export',
-    title: 'EXPORT STAGING',
+    title: 'EXPORT MANIFEST DRY-RUN',
     icon: FileDown,
     accent: '#6EC8FF',
     metrics: ['CHUNK', 'INDEX', 'BUFFER', 'CHECKSUM'],
@@ -165,6 +167,74 @@ function formatDuration(ms: number) {
   const min = Math.floor(total / 60);
   const sec = String(total % 60).padStart(2, '0');
   return `${min}:${sec}`;
+}
+
+type SoundKind = 'click' | 'confirm' | 'deny' | 'complete' | 'toggle';
+
+function playSound(enabled: boolean, kind: SoundKind) {
+  if (!enabled) return;
+  const AudioContextCtor = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  if (!AudioContextCtor) return;
+  const context = new AudioContextCtor();
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+  const tones: Record<SoundKind, [number, number, OscillatorType]> = {
+    click: [420, 0.045, 'square'],
+    confirm: [720, 0.075, 'triangle'],
+    deny: [150, 0.12, 'sawtooth'],
+    complete: [880, 0.16, 'sine'],
+    toggle: [540, 0.06, 'square'],
+  };
+  const [frequency, duration, type] = tones[kind];
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(frequency, context.currentTime);
+  oscillator.frequency.exponentialRampToValueAtTime(Math.max(40, frequency * 0.55), context.currentTime + duration);
+  gain.gain.setValueAtTime(0.0001, context.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.045, context.currentTime + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + duration);
+  oscillator.connect(gain);
+  gain.connect(context.destination);
+  oscillator.start();
+  oscillator.stop(context.currentTime + duration);
+  window.setTimeout(() => void context.close(), Math.ceil(duration * 1000) + 80);
+}
+
+function speakAi(enabled: boolean, text: string) {
+  if (!enabled || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'en-US';
+  utterance.rate = 0.78;
+  utterance.pitch = 0.45;
+  utterance.volume = 0.72;
+  window.speechSynthesis.speak(utterance);
+}
+
+const downloadBaseHours: Record<string, number> = {
+  wechat: 5.05,
+  bigdata: 4.15,
+  hotel: 3.25,
+  registry: 2.55,
+  camera: 2.05,
+  redbook: 1.55,
+  douyin: 1.25,
+};
+
+function makeDownloadProfile(moduleId: string) {
+  const base = downloadBaseHours[moduleId] ?? 1.8;
+  const jitter = 0.88 + Math.random() * 0.24;
+  return {
+    targetHours: base * jitter,
+    initialSpeed: 100 + Math.round(Math.random() * 200),
+    initialProgress: 0.004 + Math.random() * 0.018,
+  };
+}
+
+function formatEtaHours(hours: number) {
+  const safe = Math.max(0, hours);
+  const h = Math.floor(safe);
+  const m = Math.max(1, Math.round((safe - h) * 60));
+  return h > 0 ? `${h}h ${String(m).padStart(2, '0')}m` : `${m}m`;
 }
 
 function StatusPill({ tone, children }: { tone: 'ok' | 'warn' | 'danger' | 'cyan'; children: ReactNode }) {
@@ -257,7 +327,7 @@ function Sidebar({
   );
 }
 
-function TopBar() {
+function TopBar({ soundEnabled, onToggleSound }: { soundEnabled: boolean; onToggleSound: () => void }) {
   const session = useFlowStore((state) => state.session);
   const [time, setTime] = useState(() => new Date());
 
@@ -274,6 +344,18 @@ function TopBar() {
         <StatusPill tone="warn">LOCAL SIMULATION</StatusPill>
       </div>
       <div className="mono flex items-center gap-4 text-[11px] uppercase tracking-[0.18em] text-[var(--fg-secondary)]">
+        <button
+          type="button"
+          onClick={onToggleSound}
+          className={`flex h-9 items-center gap-2 border px-3 text-[10px] uppercase tracking-[0.16em] transition ${
+            soundEnabled
+              ? 'border-[rgba(58,255,124,0.45)] bg-[rgba(58,255,124,0.08)] text-[var(--accent)]'
+              : 'border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.04)] text-[var(--fg-muted)]'
+          }`}
+        >
+          {soundEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
+          SOUND
+        </button>
         <span>SEK//OS</span>
         <span className="glow">{time.toLocaleTimeString('en-US', { hour12: false })}</span>
       </div>
@@ -385,79 +467,76 @@ function LockedPanel({ module }: { module: ModuleItem }) {
 function LoadingEffectView({ index, progress, tick }: { index: number; progress: number; tick: number }) {
   const effect = loadingEffects[index];
   const Icon = effect.icon;
-  const wave = useMemo(() => {
-    return Array.from({ length: 36 }, (_, i) => {
-      const x = 10 + i * 10;
-      const y = 76 - Math.sin(i * 0.55 + tick * 0.55 + index) * 26 - Math.cos(i * 0.18 + index * 0.7) * 12;
-      return `${x},${Math.max(16, Math.min(134, y)).toFixed(1)}`;
-    }).join(' ');
+  const rows = useMemo(() => {
+    const verbs = ['open relay channel', 'read route cache', 'verify token scope', 'mirror socket state', 'stage local buffer', 'audit response hash', 'sample packet window', 'seal manifest block'];
+    return Array.from({ length: 11 }, (_, i) => {
+      const code = 200 + ((tick * 17 + index * 23 + i * 7) % 80);
+      const latency = 8 + ((tick * 11 + i * 13) % 42);
+      return `[${String(i + 1).padStart(2, '0')}] ${verbs[(i + index + tick) % verbs.length]} :: status=${code} rtt=${latency}ms ref=${randomHex(3)}`;
+    });
   }, [index, tick]);
 
-  const nodes = useMemo(() => {
-    return Array.from({ length: 7 }, (_, i) => {
-      const angle = (i / 7) * Math.PI * 2 + tick * 0.08;
-      const radius = 68 + (i % 3) * 16;
-      return {
-        x: 180 + Math.cos(angle) * radius,
-        y: 80 + Math.sin(angle) * radius * 0.55,
-        active: i <= Math.floor(progress * 7) || (tick + i) % 4 === 0,
-      };
-    });
-  }, [progress, tick]);
+  const bars = useMemo(
+    () =>
+      effect.metrics.map((metric, i) => ({
+        metric,
+        value: Math.min(99, Math.round(42 + progress * 48 + ((tick + i * 9) % 10))),
+      })),
+    [effect.metrics, progress, tick],
+  );
 
   return (
-    <div className="grid h-full min-h-0 grid-cols-[280px_minmax(0,1fr)] gap-4 overflow-hidden">
-      <div className="terminal-border flex min-h-0 flex-col justify-between border border-[rgba(255,255,255,0.08)] bg-[rgba(5,8,10,0.55)] p-4">
-        <div>
-          <div className="mb-4 grid h-14 w-14 place-items-center border" style={{ borderColor: `${effect.accent}80`, color: effect.accent, background: `${effect.accent}14` }}>
-            <Icon size={28} />
+    <div className="grid h-full min-h-0 grid-cols-[minmax(0,1fr)_260px] gap-4 overflow-hidden">
+      <div className="terminal-border min-h-0 overflow-hidden border border-[rgba(255,255,255,0.08)] bg-black/45 p-4">
+        <div className="mb-3 flex items-center justify-between border-b border-[rgba(255,255,255,0.08)] pb-3">
+          <div className="flex items-center gap-3">
+            <div className="grid h-9 w-9 place-items-center border" style={{ borderColor: `${effect.accent}80`, color: effect.accent, background: `${effect.accent}12` }}>
+              <Icon size={20} />
+            </div>
+            <div>
+              <p className="mono text-[10px] uppercase tracking-[0.18em]" style={{ color: effect.accent }}>{effect.title}</p>
+              <p className="mono mt-1 text-[9px] uppercase tracking-[0.18em] text-[var(--fg-muted)]">tty session / local simulation / no external query</p>
+            </div>
           </div>
-          <p className="display text-xl font-semibold uppercase tracking-[0.08em]" style={{ color: effect.accent }}>{effect.title}</p>
-          <p className="mono mt-3 text-[10px] uppercase leading-5 tracking-[0.16em] text-[var(--fg-muted)]">
-            route-id {randomHex(3)}
-            <br />
-            remote-link {Math.floor(progress * 9999).toString().padStart(4, '0')}
-            <br />
-            cipher mask AES-GCM
-          </p>
+          <span className="mono text-[10px] uppercase tracking-[0.18em] text-[var(--fg-secondary)]">pid {3200 + index * 17 + (tick % 9)}</span>
         </div>
-        <div className="space-y-2">
-          {effect.metrics.map((metric, i) => (
-            <div key={metric}>
-              <div className="mb-1 flex justify-between mono text-[9px] uppercase tracking-[0.16em] text-[var(--fg-muted)]">
-                <span>{metric}</span>
-                <span>{Math.round(50 + progress * 42 + ((tick + i * 13) % 8))}%</span>
-              </div>
-              <div className="h-1.5 bg-[rgba(255,255,255,0.06)]">
-                <div className="h-full transition-[width] duration-300" style={{ width: `${Math.min(100, 48 + progress * 46 + ((tick + i) % 7))}%`, backgroundColor: effect.accent }} />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
 
-      <div className="relative min-h-0 overflow-hidden border border-[rgba(255,255,255,0.08)] bg-[rgba(5,8,10,0.45)]">
-        <div className="absolute inset-0 opacity-35" style={{ backgroundImage: 'linear-gradient(rgba(58,255,124,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(58,255,124,0.08) 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
-        <svg className="absolute inset-0 h-full w-full" viewBox="0 0 380 160" preserveAspectRatio="none">
-          <polyline points={wave} fill="none" stroke={effect.accent} strokeWidth="2.5" strokeLinejoin="round" opacity="0.9" />
-          <polyline points={wave} fill="none" stroke={effect.accent} strokeWidth="9" strokeLinejoin="round" opacity="0.14" />
-          {nodes.map((node, i) => (
-            <g key={`${effect.id}-${i}`}>
-              {nodes.slice(0, i).map((prev, j) => (
-                <line key={`${i}-${j}`} x1={node.x} y1={node.y} x2={prev.x} y2={prev.y} stroke={effect.accent} strokeWidth="0.8" opacity="0.16" />
+        <div className="grid h-[calc(100%-56px)] min-h-0 grid-cols-[minmax(0,1fr)_180px] gap-3 overflow-hidden">
+          <div className="min-h-0 overflow-hidden bg-[rgba(0,0,0,0.24)] p-3">
+            <div className="mono text-[10px] leading-5 text-[var(--fg-secondary)]">
+              <p className="text-[var(--accent)]">$ sek-link --mode verify --profile {effect.id} --session {randomHex(2)}</p>
+              {rows.map((row, i) => (
+                <p key={`${row}-${i}`} className={i % 5 === 0 ? 'text-[var(--warn)]' : i % 3 === 0 ? 'text-[var(--cyan)]' : ''}>
+                  {row}
+                </p>
               ))}
-              <circle cx={node.x} cy={node.y} r={node.active ? 5.5 : 3.2} fill={node.active ? effect.accent : 'transparent'} stroke={effect.accent} strokeWidth="1.5" opacity={node.active ? 0.95 : 0.45} />
-            </g>
-          ))}
-          <rect x="12" y="12" width={Math.max(4, progress * 356)} height="4" fill={effect.accent} opacity="0.9" />
-        </svg>
-        <div className="absolute bottom-4 left-4 right-4 grid grid-cols-4 gap-2">
-          {['RX', 'TX', 'RTT', 'AUTH'].map((item, i) => (
-            <div key={item} className="border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.34)] p-2">
-              <p className="mono text-[9px] uppercase tracking-[0.18em] text-[var(--fg-muted)]">{item}</p>
-              <p className="mono mt-1 text-sm" style={{ color: effect.accent }}>{Math.round(20 + progress * 70 + ((tick + i * 5) % 9))}</p>
+              <p className="text-[var(--accent)]">$ checksum window {randomHex(8)} :: progress {fmtPercent(progress)}%</p>
             </div>
-          ))}
+          </div>
+
+          <div className="space-y-3 overflow-hidden">
+            {bars.map((bar) => (
+              <div key={bar.metric} className="border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.26)] p-2">
+                <div className="mb-2 flex justify-between mono text-[9px] uppercase tracking-[0.14em] text-[var(--fg-muted)]">
+                  <span>{bar.metric}</span>
+                  <span style={{ color: effect.accent }}>{bar.value}%</span>
+                </div>
+                <div className="h-1.5 bg-[rgba(255,255,255,0.06)]">
+                  <div className="h-full transition-[width] duration-300" style={{ width: `${bar.value}%`, backgroundColor: effect.accent }} />
+                </div>
+              </div>
+            ))}
+            <div className="border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.26)] p-2">
+              <p className="mono mb-2 text-[9px] uppercase tracking-[0.14em] text-[var(--fg-muted)]">socket table</p>
+              {Array.from({ length: 5 }, (_, i) => (
+                <div key={i} className="grid grid-cols-[42px_1fr_34px] gap-2 mono text-[9px] leading-5 text-[var(--fg-secondary)]">
+                  <span>tcp{i}</span>
+                  <span className="truncate">10.{index + 8}.{(tick * 7 + i * 31) % 255}.{20 + i}</span>
+                  <span className={i % 2 ? 'text-[var(--cyan)]' : 'text-[var(--accent)]'}>{i % 2 ? 'SYN' : 'EST'}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -579,20 +658,26 @@ function FolderSelectPanel({ module, onSelected }: { module: ModuleItem; onSelec
   );
 }
 
-function DownloadPanel({ module, folder }: { module: ModuleItem; folder: string }) {
-  const [speed, setSpeed] = useState(160);
-  const [progress, setProgress] = useState(0.08);
+function DownloadPanel({ module, folder, onSound }: { module: ModuleItem; folder: string; onSound: (kind: SoundKind, voice?: string) => void }) {
+  const [profile] = useState(() => makeDownloadProfile(module.id));
+  const [speed, setSpeed] = useState(profile.initialSpeed);
+  const [progress, setProgress] = useState(profile.initialProgress);
   const [notice, setNotice] = useState('');
 
   useEffect(() => {
+    onSound('complete', `Download profile initialized. Estimated completion ${formatEtaHours(profile.targetHours)}.`);
     const timer = window.setInterval(() => {
-      setSpeed(100 + Math.round(Math.random() * 200));
-      setProgress((prev) => Math.min(0.92, prev + Math.random() * 0.0017));
+      const nextSpeed = 100 + Math.round(Math.random() * 200);
+      setSpeed(nextSpeed);
+      setProgress((prev) => {
+        const step = (1 / (profile.targetHours * 3600)) * (0.75 + Math.random() * 0.55) * (nextSpeed / 190);
+        return Math.min(0.92, prev + step);
+      });
     }, 1000);
     return () => window.clearInterval(timer);
-  }, []);
+  }, [onSound, profile.targetHours]);
 
-  const etaHours = 1.8 + (1 - progress) * 0.45;
+  const etaHours = profile.targetHours * (1 - progress);
 
   return (
     <Panel title={`${module.label} // 数据下载到本机`} action={<StatusPill tone="ok">download active</StatusPill>}>
@@ -616,12 +701,15 @@ function DownloadPanel({ module, folder }: { module: ModuleItem; folder: string 
             </div>
             <div className="border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.24)] p-3">
               <p className="mono text-[9px] uppercase tracking-[0.16em] text-[var(--fg-muted)]">remaining</p>
-              <p className="mono mt-2 text-xl text-[var(--warn)]">{etaHours.toFixed(1)}h</p>
+              <p className="mono mt-2 text-xl text-[var(--warn)]">{formatEtaHours(etaHours)}</p>
             </div>
           </div>
           <button
             type="button"
-            onClick={() => setNotice('数据尚未下载完成，无法导出。')}
+            onClick={() => {
+              setNotice('数据尚未下载完成，无法导出。');
+              onSound('deny', 'Export denied. Data transfer is incomplete.');
+            }}
             className="mono mt-6 flex h-11 w-fit items-center gap-2 border border-[rgba(0,229,255,0.45)] bg-[rgba(0,229,255,0.08)] px-4 text-xs uppercase tracking-[0.18em] text-[var(--cyan)]"
           >
             <Download size={15} />
@@ -788,13 +876,51 @@ function FilesystemRisk({ data }: { data: ReturnType<typeof makeChartData> }) {
   );
 }
 
+function SwitchConfirmDialog({
+  module,
+  onCancel,
+  onConfirm,
+}: {
+  module: ModuleItem;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 backdrop-blur-sm">
+      <div className="panel terminal-border w-[460px] p-5">
+        <p className="mono text-[10px] uppercase tracking-[0.22em] text-[var(--fg-muted)]">navigation warning</p>
+        <h3 className="display mt-2 text-xl font-semibold text-[var(--fg-primary)]">切换页面将丧失已有进度</h3>
+        <p className="mono mt-3 text-xs leading-6 text-[var(--fg-secondary)]">目标页面：{module.label} / {module.short}</p>
+        <div className="mt-5 flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="mono h-10 border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] px-4 text-xs uppercase tracking-[0.16em] text-[var(--fg-secondary)]"
+          >
+            取消
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="mono h-10 border border-[rgba(255,59,92,0.45)] bg-[rgba(255,59,92,0.1)] px-4 text-xs uppercase tracking-[0.16em] text-[var(--danger)]"
+          >
+            确认切换
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const [activeModule, setActiveModule] = useState<ModuleItem>(modules[0]);
+  const [pendingModule, setPendingModule] = useState<ModuleItem | null>(null);
   const [stage, setStage] = useState<QueryStage>('form');
   const [phone, setPhone] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [apiError, setApiError] = useState('');
   const [selectedFolder, setSelectedFolder] = useState('');
+  const [soundEnabled, setSoundEnabled] = useState(false);
   const [logs, setLogs] = useState<string[]>(() => Array.from({ length: 18 }, () => makeFakeLog()));
   const [chartData, setChartData] = useState(() => makeChartData(36));
 
@@ -806,7 +932,15 @@ export default function Dashboard() {
     return () => window.clearInterval(timer);
   }, []);
 
-  const selectModule = useCallback((module: ModuleItem) => {
+  const emitSound = useCallback(
+    (kind: SoundKind, voice?: string) => {
+      playSound(soundEnabled, kind);
+      if (voice) speakAi(soundEnabled, voice);
+    },
+    [soundEnabled],
+  );
+
+  const applyModule = useCallback((module: ModuleItem) => {
     setActiveModule(module);
     setStage(module.special ? 'form' : 'locked');
     setPhone('');
@@ -815,18 +949,52 @@ export default function Dashboard() {
     setSelectedFolder('');
   }, []);
 
+  const requestModuleSwitch = useCallback(
+    (module: ModuleItem) => {
+      if (module.id === activeModule.id) return;
+      emitSound('click', 'Navigation change requested.');
+      setPendingModule(module);
+    },
+    [activeModule.id, emitSound],
+  );
+
+  const confirmModuleSwitch = useCallback(() => {
+    if (!pendingModule) return;
+    emitSound('confirm', 'Page switched. Previous progress discarded.');
+    applyModule(pendingModule);
+    setPendingModule(null);
+  }, [applyModule, emitSound, pendingModule]);
+
+  const toggleSound = useCallback(() => {
+    setSoundEnabled((enabled) => {
+      const next = !enabled;
+      playSound(true, 'toggle');
+      if (next) speakAi(true, 'Audio channel online. Mechanical voice interface enabled.');
+      else window.speechSynthesis?.cancel();
+      return next;
+    });
+  }, []);
+
   const submitSpecial = useCallback(() => {
     if (!apiKey.trim()) {
       setApiError('请输入APIKEY');
+      emitSound('deny', 'API key missing.');
       return;
     }
     setApiError('');
+    emitSound('confirm', 'API key accepted for verification. Remote link analysis started.');
     setStage('loading');
-  }, [apiKey]);
+  }, [apiKey, emitSound]);
 
   const finishLoading = useCallback(() => {
-    setStage(apiKey === VALID_API_KEY ? 'folder' : 'invalid');
-  }, [apiKey]);
+    if (apiKey === VALID_API_KEY) {
+      emitSound('complete', 'Verification complete. Select a local storage folder.');
+      setStage('folder');
+    } else {
+      emitSound('deny', 'Verification failed. Invalid API key.');
+      setStage('invalid');
+    }
+  }, [apiKey, emitSound]);
 
   const mainContent = useMemo(() => {
     if (!activeModule.special || stage === 'locked') return <LockedPanel module={activeModule} />;
@@ -837,12 +1005,13 @@ export default function Dashboard() {
           module={activeModule}
           onSelected={(folder) => {
             setSelectedFolder(folder);
+            emitSound('complete', 'Local folder selected. Download queue initialized.');
             setStage('download');
           }}
         />
       );
     }
-    if (stage === 'download') return <DownloadPanel module={activeModule} folder={selectedFolder} />;
+    if (stage === 'download') return <DownloadPanel module={activeModule} folder={selectedFolder} onSound={emitSound} />;
     if (stage === 'invalid') return <InvalidKeyPanel module={activeModule} onRetry={() => setStage('form')} />;
     return (
       <SpecialQueryForm
@@ -855,13 +1024,13 @@ export default function Dashboard() {
         onSubmit={submitSpecial}
       />
     );
-  }, [activeModule, apiError, apiKey, finishLoading, phone, selectedFolder, stage, submitSpecial]);
+  }, [activeModule, apiError, apiKey, emitSound, finishLoading, phone, selectedFolder, stage, submitSpecial]);
 
   return (
     <div className="screen bg-[var(--bg-void)]">
       <main className="relative z-10 grid h-full w-full grid-cols-[268px_1fr] grid-rows-[64px_minmax(0,1fr)] gap-4 overflow-hidden p-4">
-        <Sidebar activeId={activeModule.id} onSelect={selectModule} />
-        <TopBar />
+        <Sidebar activeId={activeModule.id} onSelect={requestModuleSwitch} />
+        <TopBar soundEnabled={soundEnabled} onToggleSound={toggleSound} />
         <section className="grid min-h-0 grid-cols-[minmax(0,1fr)_360px] grid-rows-[96px_minmax(0,1fr)_170px_72px] gap-4 overflow-hidden">
           <div className="col-span-2 grid min-h-0 grid-cols-4 gap-4 overflow-hidden">
             <SummaryStrip activeModule={activeModule} />
@@ -884,6 +1053,16 @@ export default function Dashboard() {
           </div>
         </section>
       </main>
+      {pendingModule && (
+        <SwitchConfirmDialog
+          module={pendingModule}
+          onCancel={() => {
+            emitSound('click');
+            setPendingModule(null);
+          }}
+          onConfirm={confirmModuleSwitch}
+        />
+      )}
     </div>
   );
 }
